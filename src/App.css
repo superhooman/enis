@@ -1,0 +1,151 @@
+body {
+  background-color: #f5f5f5;
+  width: 100vw;
+  font-family: "Segoe UI Web (West European)", "Segoe UI", -apple-system,
+    BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  color: #5f5f5f;
+  overflow-x: hidden;
+}
+section {
+  width: 100%;
+  padding: 40px;
+  box-sizing: border-box;
+  height: 100vh;
+}
+.login {
+  position: absolute;
+  background: #fff;
+  padding: 36px;
+
+  box-sizing: border-box;
+}
+.login .logo {
+  font-size: 32px;
+  display: flex;
+  margin-bottom: 16px;
+}
+.login .inner > span {
+  padding: 0;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  font-weight: 300;
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  display: block;
+}
+.login .inner > form > div:not(.buttons) {
+  margin-bottom: 16px;
+}
+.buttons {
+  display: flex;
+  justify-content: space-between;
+}
+.buttons button {
+  width: 50%;
+}
+.buttons button:first-of-type {
+  margin-right: 5px;
+}
+.ms-Panel-content {
+  padding-top: 20px;
+}
+.ms-Button--primary {
+  background-color: #29d18e !important;
+}
+.ms-Button--primary:hover {
+  background-color: #26c585 !important;
+}
+.ms-Button--primary:active {
+  background-color: #22b87c !important;
+}
+.ms-MessageBar-innerText {
+  line-height: 14px !important;
+}
+.ms-MessageBar {
+  margin-bottom: 16px;
+}
+.ms-Panel-contentInner {
+  padding: 0px !important;
+}
+.ms-Dropdown:focus .ms-Dropdown-title,
+.ms-TextField-fieldGroup.fieldGroupIsFocused_33c57cb4 {
+  border-color: #29d18e !important;
+}
+.ms-Checkbox {
+  margin-bottom: 16px !important;
+}
+.ms-Checkbox.is-checked:focus .ms-Checkbox-checkbox,
+.ms-Checkbox.is-checked:hover .ms-Checkbox-checkbox {
+  border-color: #26c585 !important;
+  background-color: #26c585 !important;
+}
+.ms-Checkbox.is-checked .ms-Checkbox-checkbox {
+  border-color: #29d18e !important;
+  background-color: #29d18e !important;
+}
+.ms-Spinner-circle{
+  border-color: #bce9d7!important;
+  border-top-color: #29d18e!important;
+}
+.ms-Spinner-label{
+  color: #26c585!important;
+  animation: 5s newform ease-in-out;
+}
+.first button {
+  width: 100%;
+}
+form {
+  transition: opacity 0.2s ease-out;
+}
+form.hide {
+  opacity: 0;
+}
+form {
+  animation: newform 0.2s ease-in;
+}
+.inner {
+  position: relative;
+}
+.loader {
+  position: absolute;
+  z-index: 20;
+  background-color: #fff;
+  top: 43px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+@keyframes newform {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (min-width: 601px) {
+  .login {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -43px;
+    width: 100%;
+    max-width: 412px;
+  }
+}
+@media (max-width: 600px) {
+  section {
+    padding: 0px;
+  }
+  .login {
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100%;
+  }
+}
