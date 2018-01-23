@@ -33,6 +33,16 @@ const cities = [
   { code: "shymkent_cbd", label: "Шымкент ХБН", value: 18 }
 ];
 
+const getWidth = (subject) =>{
+  var result
+  if(subject.summative.maximum !== 0){
+    result = (subject.formative.current/subject.formative.maximum) * 70 + (subject.summative.current/subject.summative.maximum) * 30
+  }else{
+    result = (subject.formative.current/subject.formative.maximum) * 100
+  }
+  return result
+}
+
 class App extends Component {
   constructor() {
     super();
@@ -90,11 +100,12 @@ class Dashboard extends Component {
       journal: this.props.journal,
       quarter: 0,
     }
+    this.getGoalIMKO = this.getGoalIMKO.bind(this)
   }
-  componentDidMount(){
-    if(this.state.isNotLoaded){
+  componentDidMount() {
+    if (this.state.isNotLoaded) {
       var self = this
-      if(cookie.load('pin')){
+      if (cookie.load('pin')) {
         axios({
           method: "post",
           url: "https://api.uenify.com/GetSubjectData/",
@@ -122,12 +133,21 @@ class Dashboard extends Component {
             redirect: true
           })
         })
-      }else{
+      } else {
         this.setState({
           redirect: true
         })
       }
     }
+  }
+  getGoalIMKO(subjectID){
+    axios({
+      method: "post",
+      url: "https://api.uenify.com/GetGoals/",
+      data: "pin=" + this.state.pin + "&password=" + this.state.password + "&school=" + this.state.city + "&diary=" + this.state.journal + '&subjectID=' + subjectID + '&quarterID=' + (this.state.quarter + 1)
+    }).then((response)=>{
+      console.log(response.data)
+    })
   }
   render() {
     return (
@@ -136,14 +156,82 @@ class Dashboard extends Component {
           <Redirect to="/" />
           :
           <div className="dashboard">
-            {this.state.data.data ? (<div className="subjects">
-                  {this.state.data.data[0].data[this.state.quarter].data.map((subject)=>(
-                    <div key={subject.id} className="subject">
-                      <h2>{subject.name}</h2>
-                      <h4>{subject.formative.current + ' | ' +subject.formative.maximum}</h4>
+            <div className="modal">
+              <div className="modal-back"/>
+              <div className="modal-content">
+                
+              </div>
+            </div>
+            <div className="tabs">
+              <div onClick={()=>{
+                this.setState({
+                  quarter: 0
+                })
+              }} className={this.state.quarter === 0 ? 'tab active': 'tab'}>
+                1 четверть
+              </div>
+              <div onClick={()=>{
+                this.setState({
+                  quarter: 1
+                })
+              }} className={this.state.quarter === 1 ? 'tab active': 'tab'}>
+                2 четверть
+              </div>
+              <div onClick={()=>{
+                this.setState({
+                  quarter: 2
+                })
+              }} className={this.state.quarter === 2 ? 'tab active': 'tab'}>
+                3 четверть
+              </div>
+              <div onClick={()=>{
+                this.setState({
+                  quarter: 3
+                })
+              }} className={this.state.quarter === 3 ? 'tab active': 'tab'}>
+                4 четверть
+              </div>
+            </div>
+            <div className="subjects">
+            {this.state.data.data ? this.state.journal === 'IMKO' ? (<div className="subjects">
+              {this.state.data.data[0].data[this.state.quarter].data.map((subject) => (
+                <div key={subject.id} onClick={()=>{
+                  this.getGoalIMKO(subject.id)
+                }} className="subject">
+                <div className={getWidth(subject) === 100 ? 'progress full': 'progress'} style={{
+                  width: getWidth(subject) + '%'
+                }}/>
+                  <h2 className="title">{subject.name}</h2>
+                  <div className="subject-info">
+                    <div className="formative">
+                      <div className="name">
+                        ФО
+                        </div>
+                      <div className="value">
+                        {subject.formative.current + ' | ' + subject.formative.maximum}
+                      </div>
                     </div>
-                  ))}
-                </div>): ''}
+                    <div className="summative">
+                      <div className="name">
+                        ВСО
+                        </div>
+                      <div className="value">
+                        {subject.summative.current + ' | ' + subject.summative.maximum}
+                      </div>
+                    </div>
+                    <div className="grade">
+                      <div className="name">
+                        Оценка
+                        </div>
+                      <div className="value">
+                        {subject.grade}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>) : '' : ''}
+            </div>
           </div>
         }
       </div>
@@ -165,8 +253,8 @@ class Login extends Component {
     };
     this.login = this.login.bind(this)
   }
-  componentWillMount(){
-    if (cookie.load('pin')){
+  componentWillMount() {
+    if (cookie.load('pin')) {
       this.login()
     }
   }
@@ -194,7 +282,7 @@ class Login extends Component {
             {
               path: '/',
               expires: expires,
-              maxAge: 1000,
+              maxAge: 1209600,
             }
           )
           cookie.save(
@@ -203,7 +291,7 @@ class Login extends Component {
             {
               path: '/',
               expires: expires,
-              maxAge: 1000,
+              maxAge: 1209600,
             }
           )
           cookie.save(
@@ -212,7 +300,7 @@ class Login extends Component {
             {
               path: '/',
               expires: expires,
-              maxAge: 1000,
+              maxAge: 1209600,
             }
           )
           cookie.save(
@@ -221,7 +309,7 @@ class Login extends Component {
             {
               path: '/',
               expires: expires,
-              maxAge: 1000,
+              maxAge: 1209600,
             }
           )
         }

@@ -229,6 +229,106 @@ footer{
   transform: none;
 }
 
+.dashboard{
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 100px 20px 0 20px;
+}
+
+.subjects{
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.subject{
+  width: 49%;
+}
+
+.subject{
+  padding: 20px;
+  position: relative;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transform: none;
+  transition: box-shadow .2s ease-in-out, transform .2s ease-in-out;
+  box-shadow: 0px 9px 30px -6px rgba(50, 50, 50, 0.3);
+}
+.subject:hover{
+  box-shadow: 0px 3px 30px -6px rgba(50, 50, 50, 0.3);
+}
+.subject:active{
+  transform: scale(0.95)
+}
+.subject .title{
+  font-weight: 500;
+  font-size: 18px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subject-info{
+  margin-top: 5px;
+  display: flex;
+  text-align: center;
+}
+.formative{
+  width: 50px;
+}
+.summative{
+  width: 50px;
+  margin-left: 10px;
+}
+.grade{
+  position: absolute;
+  right: 20px;
+}
+.name{
+  font-size: 13px;
+}
+.value{
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.progress{
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  border-top-left-radius: 4px;
+  background-color: #29d18e;
+}
+
+.progress.full{
+  border-top-right-radius: 4px;
+}
+
+.tabs{
+  display: flex;
+  margin-bottom: 50px;
+}
+
+.tab{
+  font-weight: 500;
+  width: 25%;
+  cursor: pointer;
+  text-align: center;
+  padding: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-bottom .2s ease-in-out, color .2s ease-in-out;
+  border-bottom: 2px transparent solid;
+}
+
+.tab.active{
+  color: #29d18e;
+  border-color: #29d18e;
+}
 @media screen and (max-width: 750px) {
   .message{
     width: 100%;
@@ -244,6 +344,9 @@ footer{
   }
   .login-cont{
     max-width: 100%;
+  }
+  .subject{
+    width: 100%;
   }
 }
 @media screen and (min-width: 1300px){
