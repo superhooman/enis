@@ -11,61 +11,154 @@ import axios from "axios";
 import cookie from "react-cookies";
 import Select from 'react-select';
 
+const proxy = "http://localhost/proxy.php?"
+
 const cities = [
-  { code: "aktau_cbd", label: "Актау ХБН", value: 0 },
-  { code: "aktobe_phmd", label: "Актобе ФМН", value: 1 },
-  { code: "almaty_phmd", label: "Алматы ФМН", value: 2 },
-  { code: "almaty_cbd", label: "Алматы ХБН", value: 3 },
-  { code: "astana_phmd", label: "Астана ФМН", value: 4 },
-  { code: "atyrau_cbd", label: "Атырау ХБН", value: 5 },
-  { code: "karaganda_cbd", label: "Караганда ХБН", value: 6 },
-  { code: "kokshetau_phmd", label: "Кокшетау ФМН", value: 7 },
-  { code: "kostanay_phmd", label: "Костанай ФМН", value: 8 },
-  { code: "kyzylorda_cbd", label: "Кызылорда ХБН", value: 9 },
-  { code: "pavlodar_cbd", label: "Павлодар ХБН", value: 10 },
-  { code: "petropavlovsk_cbd", label: "Петропавловск ХБН", value: 11 },
-  { code: "semey_phmd", label: "Семей ФМН", value: 12 },
-  { code: "taldykorgan_phmd", label: "Талдыкорган ФМН", value: 13 },
-  { code: "taraz_phmd", label: "Тараз ФМН", value: 14 },
-  { code: "uralsk_phmd", label: "Уральск ФМН", value: 15 },
-  { code: "oskemen_cbd", label: "Усть-Каменогорск ХБН", value: 16 },
-  { code: "shymkent_phmd", label: "Шымкент ФМН", value: 17 },
-  { code: "shymkent_cbd", label: "Шымкент ХБН", value: 18 }
+  { code: "http://akt.nis.edu.kz/Aktau", label: "Актау ХБН", value: 0 },
+  { code: "http://akb.nis.edu.kz/Aktobe", label: "Актобе ФМН", value: 1 },
+  { code: "http://fmalm.nis.edu.kz/Almaty_Fmsh", label: "Алматы ФМН", value: 2 },
+  { code: "http://hbalm.nis.edu.kz/Almaty_Hbsh", label: "Алматы ХБН", value: 3 },
+  { code: "http://ast.nis.edu.kz/Astana_Fmsh", label: "Астана ФМН", value: 4 },
+  { code: "http://atr.nis.edu.kz/Atyrau", label: "Атырау ХБН", value: 5 },
+  { code: "http://krg.nis.edu.kz/Karaganda", label: "Караганда ХБН", value: 6 },
+  { code: "http://kt.nis.edu.kz/Kokshetau", label: "Кокшетау ФМН", value: 7 },
+  { code: "http://kst.nis.edu.kz/Kostanay", label: "Костанай ФМН", value: 8 },
+  { code: "http://kzl.nis.edu.kz/Kyzylorda", label: "Кызылорда ХБН", value: 9 },
+  { code: "http://pvl.nis.edu.kz/Pavlodar", label: "Павлодар ХБН", value: 10 },
+  { code: "http://ptr.nis.edu.kz/Petropavlovsk", label: "Петропавловск ХБН", value: 11 },
+  { code: "http://sm.nis.edu.kz/Semey_FMSH", label: "Семей ФМН", value: 12 },
+  { code: "http://tk.nis.edu.kz/Taldykorgan", label: "Талдыкорган ФМН", value: 13 },
+  { code: "http://trz.nis.edu.kz/Taraz", label: "Тараз ФМН", value: 14 },
+  { code: "http://ura.nis.edu.kz/Uralsk", label: "Уральск ФМН", value: 15 },
+  { code: "http://ukk.nis.edu.kz/Oskemen", label: "Усть-Каменогорск ХБН", value: 16 },
+  { code: "http://fmsh.nis.edu.kz/Shymkent_Fmsh", label: "Шымкент ФМН", value: 17 },
+  { code: "http://hbsh.nis.edu.kz/Shymkent_Hbsh", label: "Шымкент ХБН", value: 18 }
 ];
 
-const getWidth = (subject) =>{
+const stripHTMLTags = (str) => {
+  if ((str === null) || (str === ''))
+    return ' ';
+  else
+    str = str.toString();
+  var out = str.replace(/<style>[^>]*<\/style>/g, ' ').replace(/<w[^>]*>[^>]*<\/w[^>]*>/gi, ' ')
+  return urlify(out.replace(/<[^>]*>/g, ' '))
+}
+
+const urlify = (text) => {
+  var urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => {
+    return '<a href="' + url + '">' + url + '</a>';
+  })
+}
+
+const timeConv = (data) => {
+  if (data != null) {
+    var date = data.split('T')[0];
+    return date.split('-')[2] + '.' + date.split('-')[1] + '.' + date.split('-')[0]
+  } else {
+    return '&ensp; &ensp;'
+  }
+}
+
+const getStatus = (status) => {
+  if (status === "Достиг" || status === "Жетті") {
+    return 'status ok'
+  } else if (status === "Стремится" || status === "Тырысады") {
+    return 'status bad'
+  } else {
+    return 'status'
+  }
+}
+
+const getList = (data) => {
+  var childList = []
+  for (var i in data) {
+    var child = {}
+    child.value = i
+    child.label = data[i].Name
+    childList.push(child)
+  }
+  return childList
+}
+
+const getIcon = (format) => {
+  switch (format) {
+    case 'docx':
+      return 'M23.999 3.733V20.28c0 .141-.05.255-.149.346-.101.094-.221.138-.36.138h-8.559v-2.295h6.982v-1.045h-6.988v-1.279h6.982v-1.044H14.93v-1.29h6.98v-1.032h-6.98v-1.293h6.98v-1.044h-6.98V9.163h6.98V8.12h-6.98V6.815h6.98v-.994h-6.98V3.228h8.562c.149 0 .27.048.358.149.105.099.15.22.149.356zM13.65.641v22.722L0 21.001V3.067L13.65.637v.004zm-2.06 6.708l-1.709.105-1.096 6.785H8.76c-.054-.321-.255-1.445-.615-3.367l-.639-3.263-1.604.08-.642 3.183c-.375 1.854-.584 2.933-.639 3.236h-.015l-.975-6.25-1.47.078 1.575 7.883 1.634.105.615-3.068c.36-1.8.57-2.846.615-3.132h.045c.061.305.256 1.374.615 3.21l.615 3.158 1.77.105 1.98-8.85h-.035z'
+    case 'pptx':
+      return 'M23.484 4h-8.542v3.186c.515-.39 1.132-.588 1.855-.588v3.098h3.074c-.015.869-.315 1.602-.901 2.193-.584.592-1.318.896-2.188.916-.675-.02-1.29-.223-1.829-.615v2.129h6.719v1.045h-6.721v1.293h6.715v1.032h-6.719v2.34h8.543c.346 0 .51-.182.51-.537V4.51c0-.342-.164-.51-.51-.51h-.006zM17.28 9.186V6.062c.87.02 1.6.322 2.188.91.586.588.891 1.326.906 2.214H17.28zm-9.024.052c-.053-.201-.14-.357-.263-.472-.12-.112-.282-.194-.483-.246-.225-.061-.457-.09-.69-.09l-.72.014v2.999h.026c.261.016.535.016.825 0 .285-.015.555-.09.809-.225.313-.225.5-.525.561-.914.06-.391.039-.766-.064-1.111v.045zM0 3.059v17.946l13.688 2.365V.63L0 3.059zm10.213 8.087c-.375.869-.935 1.425-1.684 1.665-.749.239-1.558.332-2.429.279v3.422l-1.801-.209V6.901l2.859-.149c.53-.033 1.054.025 1.566.18.515.152.922.459 1.223.922.3.461.469.996.51 1.605.037.609-.043 1.172-.244 1.687z'
+    case 'pdf':
+      return 'M23.598 15.368c-.71-.76-2.164-1.197-4.224-1.197-1.1 0-2.375.11-3.76.37-.782-.77-1.562-1.67-2.307-2.72-.53-.74-.993-1.52-1.42-2.29.813-2.54 1.206-4.61 1.206-6.1 0-1.672-.603-3.416-2.34-3.416-.533 0-1.066.325-1.35.8-.783 1.408-.43 4.493.917 7.54-.503 1.52-1.035 2.973-1.7 4.605-.578 1.376-1.244 2.794-1.923 4.096C2.793 18.64.267 20.49.03 21.94c-.104.547.074 1.05.457 1.45.133.11.636.545 1.48.545 2.59 0 5.32-4.28 6.707-6.86 1.065-.36 2.13-.687 3.193-1.015 1.168-.323 2.34-.583 3.405-.765 2.735 2.504 5.146 2.9 6.358 2.9 1.492 0 2.024-.617 2.203-1.122.28-.65.07-1.37-.252-1.74l.02.04zm-1.385 1.054c-.104.544-.638.906-1.386.906-.21 0-.39-.037-.603-.072-1.36-.325-2.633-1.016-3.903-2.106 1.25-.214 2.31-.25 2.98-.25.74 0 1.38.032 1.81.144.49.106 1.27.435 1.095 1.38h.02zm-7.523-1.707c-.92.19-1.914.414-2.944.693-.816.223-1.666.474-2.52.77.463-.902.854-1.774 1.208-2.603.428-1.02.78-2.07 1.135-3.046.35.61.74 1.23 1.13 1.78.64.87 1.31 1.7 1.98 2.42v-.02zM10.04 1.23c.145-.29.43-.436.678-.436.745 0 .887.868.887 1.56 0 1.168-.354 2.942-.96 4.967-1.062-2.82-1.135-5.18-.603-6.09zM6.138 18.127C4.328 21.17 2.59 23.06 1.525 23.06c-.21 0-.387-.075-.53-.183-.214-.216-.32-.472-.248-.76.213-1.09 2.236-2.613 5.392-3.99z'
+    default:
+      return 'M2.759 24l.664-.144c.207-.044.412-.085.619-.126.318-.062.637-.123.955-.182.24-.046.48-.085.721-.129l.055-.015c.25-.044.498-.09.747-.12l1.214-.179V-.001h-.042c-.63.004-1.256.016-1.884.036-.689.018-1.394.06-2.084.105-.299.021-.6.046-.899.07H2.78v23.784L2.759 24zM8.911.015v22.942c.861-.1 1.72-.182 2.582-.246 2.121-.161 4.248-.211 6.373-.151 1.128.034 2.253.099 3.374.192V1.503c-1.004-.229-2.012-.432-3.028-.607-1.968-.342-3.955-.581-5.947-.731C11.151.084 10.032.033 8.913.016h-.002zm10.763 14.797l-.046-.004-.561-.061c-1.399-.146-2.805-.242-4.207-.291-1.407-.045-2.815-.03-4.223.016h-.044c-.045 0-.091 0-.135-.016-.101-.03-.195-.074-.267-.149-.127-.136-.186-.315-.156-.495.008-.061.029-.105.054-.166.027-.044.063-.104.104-.134.043-.045.09-.075.143-.104.061-.03.121-.046.18-.061h.09c.195 0 .391-.016.57-.016 1.395-.029 2.773-.029 4.169.03 1.439.06 2.864.165 4.288.33l.151.015c.044.016.089.016.135.03.105.046.194.105.255.181.044.044.074.104.105.164.029.061.044.12.044.18.015.165-.044.33-.164.45-.046.046-.091.075-.135.105-.047.03-.105.044-.166.06-.03.016-.045.016-.089.016h-.047l-.048-.08zm.035-2.711c-.044 0-.044 0-.09-.006l-.555-.071c-1.395-.179-2.804-.3-4.198-.359-1.395-.075-2.805-.09-4.214-.06l-.046-.016c-.045-.015-.09-.015-.135-.029-.09-.03-.194-.09-.254-.166-.03-.045-.076-.104-.09-.148-.075-.166-.075-.361.014-.525.031-.061.061-.105.105-.15s.09-.09.15-.104c.061-.03.119-.06.18-.06l.09-.016.585-.015c1.396-.016 2.774.015 4.153.09 1.439.075 2.865.21 4.289.39l.149.016.091.014c.105.031.194.075.27.166.12.119.18.284.165.449 0 .061-.016.121-.045.165-.029.06-.061.104-.09.15-.03.044-.074.075-.136.12-.044.029-.104.045-.164.061l-.091.014H19.8l-.091.09zm0-2.711c-.044 0-.044 0-.09-.006l-.555-.08c-1.395-.19-2.789-.334-4.198-.428-1.395-.092-2.805-.135-4.214-.129h-.046l-.09-.016c-.059-.016-.104-.036-.164-.068-.15-.092-.256-.254-.285-.438 0-.061 0-.12.016-.18.014-.061.029-.117.059-.17.031-.054.076-.102.121-.144.074-.075.18-.126.285-.15.045-.011.089-.015.135-.015h.569c1.439.009 2.879.064 4.304.172 1.395.105 2.774.26 4.153.457l.15.021c.046.007.061.007.09.019.06.02.12.046.165.08.061.033.104.075.135.123.031.048.061.101.09.158.062.156.045.334-.029.479-.029.055-.061.105-.105.146-.075.074-.164.127-.27.15-.029.012-.046.012-.091.014l-.044.005h-.091zm0-2.712c-.044 0-.044 0-.09-.007l-.555-.09c-1.395-.225-2.789-.391-4.198-.496-1.395-.119-2.805-.179-4.214-.209h-.046l-.105-.014c-.061-.015-.115-.045-.165-.074-.053-.031-.099-.076-.14-.121-.036-.045-.068-.104-.094-.149-.02-.06-.037-.12-.044-.181-.016-.18.053-.371.181-.494.074-.075.176-.125.279-.15.045-.015.09-.015.135-.015.189 0 .38.005.57.008 1.437.034 2.871.113 4.304.246 1.387.119 2.77.3 4.145.524l.135.016c.04 0 .052 0 .09.014.062.016.112.046.165.076.046.029.09.074.125.119.091.135.135.301.105.465-.015.061-.031.105-.061.166-.03.045-.074.104-.12.135-.074.074-.165.119-.271.149h-.135l.004.082zm-15.67-.509c-.09 0-.181-.021-.271-.063-.194-.095-.314-.293-.329-.505 0-.057.015-.111.03-.165.014-.068.045-.133.09-.19.045-.065.104-.12.164-.162.077-.05.167-.076.241-.092l.48-.044c.659-.058 1.305-.105 1.949-.144h.06c.105.004.195.024.271.071.194.103.314.305.314.519 0 .055-.015.109-.029.161-.016.067-.045.132-.091.189-.044.075-.104.12-.165.165-.074.045-.15.074-.24.09-.104.015-.209.015-.314.03-.136.015-.286.015-.436.031l-1.168.088-.285.031c-.061.015-.122.015-.196.015l-.075-.025zm15.655-2.201l-.091-.01-.554-.1c-1.395-.234-2.805-.425-4.214-.564-1.395-.138-2.804-.225-4.214-.271h-.045l-.09-.018c-.061-.015-.105-.038-.165-.071-.045-.03-.091-.072-.135-.121-.12-.138-.165-.33-.12-.506.016-.061.045-.12.074-.18.031-.061.076-.105.121-.15.074-.076.18-.121.285-.15.045-.015.089-.015.135-.015l.584.015c1.395.061 2.774.15 4.154.301 1.439.148 2.864.359 4.288.6l.15.014c.046 0 .061 0 .09.016.06.015.12.045.165.074.135.105.225.256.239.421.016.06 0 .12-.015.181 0 .059-.029.119-.059.164-.031.045-.062.09-.105.135-.076.076-.181.12-.286.135l-.086.014h-.046l-.06.086zM4.022 3.199c-.086 0-.171-.019-.25-.056-.07-.033-.134-.079-.187-.137-.045-.053-.086-.112-.111-.181-.02-.049-.034-.101-.039-.156-.022-.214.078-.427.255-.546.078-.054.167-.086.26-.099.158-.014.314-.014.473-.029.65-.045 1.301-.075 1.949-.105h.048c.091.016.181.03.256.075.179.105.3.315.3.524 0 .061-.016.121-.03.166-.03.074-.06.135-.104.195-.047.06-.107.12-.182.15-.075.045-.165.075-.255.075-.104.014-.21.014-.33.014l-.449.031c-.405.029-.795.045-1.186.074l-.3.016c-.075.015-.134.015-.194.015l.076-.026z'
+  }
+}
+
+const getWidth = (subject) => {
   var result
-  if(subject.summative.maximum !== 0){
-    result = (subject.formative.current/subject.formative.maximum) * 70 + (subject.summative.current/subject.summative.maximum) * 30
-  }else{
-    result = (subject.formative.current/subject.formative.maximum) * 100
+  if (subject.MaxISA !== 0) {
+    result = (subject.ApproveCnt / subject.Cnt) * 70 + (subject.ApproveISA / subject.MaxISA) * 30
+  } else {
+    result = (subject.ApproveCnt / subject.Cnt) * 100
   }
   return result
+}
+
+const getGoals = (data) => {
+  var groups = []
+  for (var i in data) {
+    if (groups[data[i].GroupIndex] === undefined) {
+      groups.push({ name: data[i].GroupName, goals: [] })
+    }
+    groups[data[i].GroupIndex].goals.push(data[i])
+  }
+  return (
+    <div>
+      {groups.map((group, index) => (
+        <div key={index} className="goals-group">
+          <h3 className="title">{group.name}</h3>
+          {group.goals.map((goal) => (
+            <div key={goal.Id} className="goal">
+              <div className="info">
+                <span className="goal-name">{goal.Name}</span>
+                {goal.Changed ? (<span className="date">{timeConv(goal.Changed)}</span>) : ''}
+                <span className={getStatus(goal.Value)}>{goal.Value}</span>
+              </div>
+              <div className="goal-content">
+                {goal.Description}
+              </div>
+              {goal.comment ? (
+                <div className="comment">
+                  {goal.Comment}
+                </div>
+              ) : ''}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      data: {},
       redirect: false,
       logged: false,
-      pin: '',
-      password: '',
-      city: '',
-      journal: ''
+      role: '',
+      journal: '',
+      city: ''
     };
     this.done = this.done.bind(this);
   }
-  done(data, pin, password, city, journal) {
+  done(role, journal, city) {
     this.setState({
       logged: true,
       redirect: true,
-      data: data,
-      pin: pin,
-      password: password,
-      city: cities[city].code,
-      journal: journal
+      role: role,
+      journal: journal,
+      city: city
     })
   }
   render() {
@@ -79,7 +172,7 @@ class App extends Component {
               (<Login onDone={this.done} />)
           )} />
           <Route path='/dashboard' render={() => (
-            <Dashboard data={this.state.data} pin={this.state.pin} password={this.state.password} city={this.state.city} journal={this.state.journal} />
+            <Dashboard city={this.state.city} journal={this.state.journal} role={this.state.role} />
           )} />
         </div>
       </Router>
@@ -92,62 +185,135 @@ class Dashboard extends Component {
     super(props)
     this.state = {
       redirect: false,
-      data: this.props.data,
-      isNotLoaded: this.props.data.data ? false : true,
-      pin: this.props.pin,
-      password: this.props.password,
-      city: this.props.city,
-      journal: this.props.journal,
+      city: this.props.city || cookie.load('city'),
+      journal: this.props.journal || cookie.load('journal'),
+      child: 0,
       quarter: 0,
+      modalIMKO: false,
+      data: false,
+      goals: [],
+      homework: [],
+      loading: false
     }
     this.getGoalIMKO = this.getGoalIMKO.bind(this)
+    this.closeModalIMKO = this.closeModalIMKO.bind(this)
+    this.logout = this.logout.bind(this)
   }
   componentDidMount() {
-    if (this.state.isNotLoaded) {
-      var self = this
-      if (cookie.load('pin')) {
-        axios({
-          method: "post",
-          url: "https://api.uenify.com/GetSubjectData/",
-          data: "pin=" + cookie.load('pin') + "&password=" + cookie.load('password') + "&school=" + cities[cookie.load('city')].code + "&diary=" + cookie.load('journal')
-        }).then((response) => {
-          if (response.data.success) {
-            this.setState({
-              data: response.data,
-              pin: cookie.load('pin'),
-              password: cookie.load('password'),
-              city: cities[cookie.load('city')].code,
-              journal: cookie.load('journal')
-            })
-          } else {
-            cookie.remove('pin')
-            cookie.remove('password')
-            self.setState({
-              redirect: true
-            })
-          }
-        }).catch((error) => {
-          cookie.remove('pin')
-          cookie.remove('password')
-          self.setState({
-            redirect: true
-          })
-        })
-      } else {
-        this.setState({
-          redirect: true
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + this.state.city + '/ImkoDiary/Subjects',
+      data: 'periodId=1'
+    }).then((response) => {
+      if (response.data.success) {
+        self.setState({
+          data: [{ data: { 0: { data: response.data.data } } }]
         })
       }
-    }
+    })
   }
-  getGoalIMKO(subjectID){
+  getGoalIMKO(subjectID, studentID) {
+    this.setState({
+      loading: true
+    })
+    axios({
+      withCredentials: true,
+      method: "post",
+      url: proxy + this.state.city + '/ImkoDiary/Goals/',
+      data: 'periodId=' + (this.state.quarter * 1 + 1) + '&subjectId=' + subjectID + '&studentId=' + studentID
+    }).then((response) => {
+      if (response.data.success) {
+        this.setState({
+          goals: response.data.data.goals,
+          loading: false,
+          homework: response.data.data.homeworks,
+          modalIMKO: true,
+          modalIMKOShow: true
+        })
+      }
+    }).catch((err) => {
+      this.setState({
+        redirect: true
+      })
+    })
+  }
+  getGoalJKO(subjectID, childID, quarterID) {
+
     axios({
       method: "post",
-      url: "https://api.uenify.com/GetGoals/",
-      data: "pin=" + this.state.pin + "&password=" + this.state.password + "&school=" + this.state.city + "&diary=" + this.state.journal + '&subjectID=' + subjectID + '&quarterID=' + (this.state.quarter + 1)
-    }).then((response)=>{
-      console.log(response.data)
+      url: "http://localhost:5000/GetGoals/",
+      data: "pin=" + this.state.pin + "&password=" + this.state.password + "&school=" + this.state.city + "&diary=" + this.state.journal + '&subjectID=' + subjectID + '&childID=' + childID + '&quarterID=' + quarterID
+    }).then((response) => {
+      if (response.data.success) {
+        this.setState({
+          JKO: response.data.data,
+          loading: false,
+          modalJKO: true,
+          modalJKOShow: true
+        })
+      }
+    }).catch((err) => {
+      this.setState({
+        redirect: true
+      })
     })
+  }
+  closeModalIMKO() {
+    this.setState({
+      modalIMKOShow: false
+    })
+    setTimeout(() => {
+      this.setState({
+        modalIMKO: false,
+        goals: [],
+        homework: []
+      })
+    }, 500)
+  }
+  logout() {
+    cookie.remove('city')
+    cookie.remove('role')
+    cookie.remove('journal')
+    this.setState({
+      redirect: true
+    })
+  }
+  handleChange = (selectedOption) => {
+    selectedOption ? this.setState({
+      child: selectedOption.value
+    }) : this.setState({
+      child: 0
+    });
+  }
+  loadQuarter(id) {
+    if (this.state.data[this.state.child].data[id]) {
+      this.setState({
+        quarter: id
+      })
+    } else {
+      var self = this
+      this.setState({
+        loading: true
+      })
+      axios({
+        withCredentials: true,
+        method: 'post',
+        url: proxy + this.state.city + '/ImkoDiary/Subjects',
+        data: 'periodId=' + (id * 1 + 1)
+      }).then((response) => {
+        if (response.data.success) {
+          var data = self.state.data
+          data[self.state.child].data[id] = { data: response.data.data }
+          self.setState({
+            loading: false,
+            data: data,
+            quarter: id
+          })
+        }
+      })
+    }
   }
   render() {
     return (
@@ -156,81 +322,184 @@ class Dashboard extends Component {
           <Redirect to="/" />
           :
           <div className="dashboard">
-            <div className="modal">
-              <div className="modal-back"/>
+            <div className={this.state.loading ? 'loader active' : 'loader'} />
+            <div className={this.state.modalIMKOShow ? 'modal active' : 'modal'}>
+              <div onClick={this.closeModalIMKO} className="modal-back" />
               <div className="modal-content">
-                
+                <div onClick={this.closeModalIMKO} className="close">
+                  <svg viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentcolor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4">
+                    <path d="M2 30 L30 2 M30 30 L2 2" />
+                  </svg>
+                </div>
+                {
+                  this.state.modalIMKO ? (
+                    <div className="goals-homework">
+                      <div className="goals">
+                        <h2 className="title">Цели</h2>
+                        {
+                          this.state.goals.length ? getGoals(this.state.goals) : (
+                            <div className="empty">
+                              Пусто
+                            </div>
+                          )
+                        }
+                      </div>
+                      <div className="homework">
+                        <h2 className="title">Домашняя работа</h2>
+                        {this.state.homework.length ? (
+                          this.state.homework.map((work) => {
+                            var html = {
+                              __html: stripHTMLTags(unescape(work.description))
+                            }
+                            return (
+                              <div key={work.date} className="work">
+                                <div className="info">
+                                  <span className="date">
+                                    {timeConv(work.date)}
+                                  </span>
+                                </div>
+                                <div dangerouslySetInnerHTML={html} className="work-content">
+                                </div>
+                                {work.files.length ? (
+                                  <div className="attached">
+                                    {work.files.map((file) => (
+                                      <a key={file} download href={this.state.city + file}>
+                                        <div className="file">
+                                          <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                            <path d={getIcon(file.split('.')[file.split('.').length - 1])} />
+                                          </svg>
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                ) : ''}
+                              </div>
+                            )
+                          })
+                        ) : (
+                            <div className="empty">
+                              Пусто
+                          </div>
+                          )}
+                      </div>
+                    </div>
+                  ) : ''
+                }
+              </div>
+            </div>
+            <div className="menu">
+              {
+                this.state.data.data ? (
+                  this.state.data.data.length > 1 ? (
+                    <Select
+                      name="form-field-name"
+                      value={this.state.child}
+                      placeholder="Ученик"
+                      searchable={false}
+                      onChange={this.handleChange}
+                      options={getList(this.state.data.data)}
+                    />) : ''
+                ) : ''
+              }
+              <div onClick={this.logout} className="logout button">
+                Выйти
               </div>
             </div>
             <div className="tabs">
-              <div onClick={()=>{
-                this.setState({
-                  quarter: 0
-                })
-              }} className={this.state.quarter === 0 ? 'tab active': 'tab'}>
+              <div onClick={() => {
+                this.loadQuarter(0)
+              }} className={this.state.quarter === 0 ? 'tab active' : 'tab'}>
                 1 четверть
               </div>
-              <div onClick={()=>{
-                this.setState({
-                  quarter: 1
-                })
-              }} className={this.state.quarter === 1 ? 'tab active': 'tab'}>
+              <div onClick={() => {
+                this.loadQuarter(1)
+              }} className={this.state.quarter === 1 ? 'tab active' : 'tab'}>
                 2 четверть
               </div>
-              <div onClick={()=>{
-                this.setState({
-                  quarter: 2
-                })
-              }} className={this.state.quarter === 2 ? 'tab active': 'tab'}>
+              <div onClick={() => {
+                this.loadQuarter(2)
+              }} className={this.state.quarter === 2 ? 'tab active' : 'tab'}>
                 3 четверть
               </div>
-              <div onClick={()=>{
-                this.setState({
-                  quarter: 3
-                })
-              }} className={this.state.quarter === 3 ? 'tab active': 'tab'}>
+              <div onClick={() => {
+                this.loadQuarter(3)
+              }} className={this.state.quarter === 3 ? 'tab active' : 'tab'}>
                 4 четверть
               </div>
             </div>
             <div className="subjects">
-            {this.state.data.data ? this.state.journal === 'IMKO' ? (<div className="subjects">
-              {this.state.data.data[0].data[this.state.quarter].data.map((subject) => (
-                <div key={subject.id} onClick={()=>{
-                  this.getGoalIMKO(subject.id)
-                }} className="subject">
-                <div className={getWidth(subject) === 100 ? 'progress full': 'progress'} style={{
-                  width: getWidth(subject) + '%'
-                }}/>
-                  <h2 className="title">{subject.name}</h2>
-                  <div className="subject-info">
-                    <div className="formative">
-                      <div className="name">
-                        ФО
+              {this.state.data ? this.state.journal === 'IMKO' ? (<div className="subjects">
+                {this.state.data[this.state.child].data[this.state.quarter].data.map((subject) => (
+                  <div key={subject.Id} onClick={() => {
+                    this.getGoalIMKO(subject.Id, this.state.data[this.state.child].childID)
+                  }} className="subject">
+                    <div className={getWidth(subject) === 100 ? 'progress full' : 'progress'} style={{
+                      width: getWidth(subject) + '%'
+                    }} />
+                    <h2 className="title">{subject.Name}</h2>
+                    <div className="subject-info">
+                      <div className="formative">
+                        <div className="name">
+                          ФО
                         </div>
-                      <div className="value">
-                        {subject.formative.current + ' | ' + subject.formative.maximum}
+                        <div className="value">
+                          {subject.ApproveCnt + ' | ' + subject.Cnt}
+                        </div>
                       </div>
-                    </div>
-                    <div className="summative">
-                      <div className="name">
-                        ВСО
+                      <div className="summative">
+                        <div className="name">
+                          ВСО
                         </div>
-                      <div className="value">
-                        {subject.summative.current + ' | ' + subject.summative.maximum}
+                        <div className="value">
+                          {subject.ApproveISA + ' | ' + subject.MaxISA}
+                        </div>
                       </div>
-                    </div>
-                    <div className="grade">
-                      <div className="name">
-                        Оценка
+                      <div className="grade">
+                        <div className="name">
+                          Оценка
                         </div>
-                      <div className="value">
-                        {subject.grade}
+                        <div className="value">
+                          {subject.Period ?
+                            subject.Period : 'N/A'}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>) : '' : ''}
+                ))}
+              </div>) : (
+                  <div className="subjects">
+                    {this.state.data.data[this.state.child].data[this.state.quarter].data.map((subject, index) => (
+                      <div key={subject.name} onClick={() => {
+                        this.getGoalJKO(index, this.state.child, this.state.quarter)
+                      }} className="subject jko">
+                        <div className={subject.percent === 100 ? 'progress full' : 'progress'} style={{
+                          width: subject.percent + '%'
+                        }} />
+                        <h2 className="title">{subject.name}</h2>
+                        <div className="subject-info">
+                          <div className="percent">
+                            <div className="name">
+                              Процент
+                            </div>
+                            <div className="value">
+                              {subject.percent ?
+                                subject.percent + ' | 100' : 'N/A'}
+                            </div>
+                          </div>
+                          <div className="grade">
+                            <div className="name">
+                              Оценка
+                            </div>
+                            <div className="value">
+                              {subject.grade ?
+                                subject.grade : 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : ''}
             </div>
           </div>
         }
@@ -244,18 +513,30 @@ class Login extends Component {
     super(props);
     this.state = {
       message: false,
+      loading: false,
       message_text: '',
-      city: cookie.load('city') ? cookie.load('city') : '',
+      city: cookie.load('cityID') ? cookie.load('cityID') : '',
       journal: cookie.load('journal') ? cookie.load('journal') : 'IMKO',
-      pin: cookie.load('pin') ? cookie.load('pin') : "000217550356",
-      password: cookie.load('password') ? cookie.load('password') : "170200nissf123",
+      pin: cookie.load('pin') ? cookie.load('pin') : "",
+      password: cookie.load('password') ? cookie.load('password') : "",
       remember: false
     };
     this.login = this.login.bind(this)
+    this.loadRoles = this.loadRoles.bind(this)
+    this.loginWithRole = this.loginWithRole.bind(this)
   }
   componentWillMount() {
-    if (cookie.load('pin')) {
-      this.login()
+    var self = this
+    if (cookie.load('city')) {
+      axios({
+        withCredentials: true,
+        method: "post",
+        url: proxy + cookie.load('city') + '/EventCalendar/GetEvents',
+      }).then((response) => {
+        if (response.data.success) {
+          self.props.onDone(cookie.load('role'), cookie.load('journal'), cookie.load('city'))
+        }
+      })
     }
   }
   handleChange = (selectedOption) => {
@@ -267,72 +548,95 @@ class Login extends Component {
   }
   login() {
     var self = this
+    this.setState({
+      loading: true
+    })
     axios({
+      withCredentials: true,
       method: "post",
-      url: "https://api.uenify.com/GetSubjectData/",
-      data: "pin=" + this.state.pin + "&password=" + this.state.password + "&school=" + cities[this.state.city].code + "&diary=" + this.state.journal
+      url: proxy + cities[this.state.city].code + '/Account/Login',
+      data: "txtUsername=" + this.state.pin + "&txtPassword=" + this.state.password
     }).then((response) => {
       if (response.data.success) {
+        self.loadRoles()
         if (self.state.remember) {
-          var expires = new Date()
-          expires.setDate(Date.now() + 1000 * 60 * 60 * 24 * 14)
-          cookie.save(
-            'pin',
-            this.state.pin,
-            {
-              path: '/',
-              expires: expires,
-              maxAge: 1209600,
-            }
-          )
-          cookie.save(
-            'password',
-            this.state.password,
-            {
-              path: '/',
-              expires: expires,
-              maxAge: 1209600,
-            }
-          )
-          cookie.save(
-            'city',
-            this.state.city,
-            {
-              path: '/',
-              expires: expires,
-              maxAge: 1209600,
-            }
-          )
-          cookie.save(
-            'journal',
-            this.state.journal,
-            {
-              path: '/',
-              expires: expires,
-              maxAge: 1209600,
-            }
-          )
+          cookie.save('city', response.data.url, {
+            maxAge: 60 * 60 * 24 * 14
+          })
+          cookie.save('journal', self.state.journal, {
+            maxAge: 60 * 60 * 24 * 14
+          })
+          cookie.save('cityID', self.state.city, {
+            maxAge: 60 * 60 * 24 * 14
+          })
+        } else {
+          cookie.save('city', response.data.url)
+          cookie.save('journal', self.state.journal)
         }
-        self.props.onDone(response.data, this.state.pin, this.state.password, this.state.city, this.state.journal)
       } else {
-        cookie.remove('pin')
-        cookie.remove('password')
         self.setState({
           message: true,
-          message_text: 'Ошибка'
+          loading: false,
+          message_text: 'Неверный пароль'
+        })
+
+      }
+    }).catch((error) => {
+      self.setState({
+        message: true,
+        loading: false,
+        message_text: 'Ошибка'
+      })
+    })
+  }
+  loadRoles() {
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + cities[this.state.city].code + '/Account/GetRoles'
+    }).then((response) => {
+      if (response.data.success) {
+        self.loginWithRole(response.data.listRole[0].value)
+      } else {
+        self.setState({
+          message: true,
+          loading: false,
+          message_text: 'Ошибка загрузки ролей'
         })
       }
     }).catch((error) => {
-      console.log(error)
       self.setState({
         message: true,
+        loading: false,
         message_text: 'Ошибка'
       })
+    })
+  }
+  loginWithRole(role) {
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + cities[this.state.city].code + '/Home/PasswordCheck',
+      data: 'password=' + this.state.password + '&role=' + role
+    }).then((response) => {
+      if (response.data.success) {
+        if (self.state.remember) {
+          cookie.save('role', response.data.role, {
+            maxAge: 60 * 60 * 24 * 14
+          })
+        } else {
+          cookie.save('role', response.data.role)
+        }
+        self.props.onDone(response.data.role, this.state.journal, cities[this.state.city].code)
+      }
     })
   }
   render() {
     return (
       <div className="login">
+        <div className={this.state.loading ? 'loader active' : 'loader'} />
         <div onClick={() => {
           this.setState({
             message: false
