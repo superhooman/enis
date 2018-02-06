@@ -252,6 +252,23 @@ class Dashboard extends Component {
       url: proxy + this.state.city + '/JceDiary/GetDiaryUrl/',
       data: 'klassId='+this.state.klass+'&periodId=1&studentId='+this.state.id
     }).then((response) => {
+      axios({
+        withCredentials: true,
+        method: 'post',
+        url: proxy + response.data.data,
+      }).then((response) => {
+        self.getJKOFinal()
+      })
+    })
+  }
+  getJKOFinal(){
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + this.state.city + '/jce/Diary/GetSubjects',
+      data: 'page=1&start=0&limit=25'
+    }).then((response) => {
       console.log(response.data)
     })
   }
