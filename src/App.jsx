@@ -187,19 +187,35 @@ class Dashboard extends Component {
       redirect: false,
       city: this.props.city || cookie.load('city'),
       journal: this.props.journal || cookie.load('journal'),
+      role: this.props.role || cookie.load('role'),
       child: 0,
       quarter: 0,
       modalIMKO: false,
       data: false,
       goals: [],
       homework: [],
-      loading: false
+      loading: false,
+      id: '',
+      klass: ''
     }
     this.getGoalIMKO = this.getGoalIMKO.bind(this)
     this.closeModalIMKO = this.closeModalIMKO.bind(this)
     this.logout = this.logout.bind(this)
   }
   componentDidMount() {
+    console.log(this.state)
+    if(this.state.role === 'Student'){
+      console.log(1)
+      if(this.state.journal === 'IMKO'){
+        console.log(2)
+        this.getIMKO()
+        this.getJKO()
+      }else if(this.state.journal === 'JKO'){
+        this.getJKO()
+      }
+    }
+  }
+  getIMKO(){
     var self = this
     axios({
       withCredentials: true,
@@ -212,6 +228,31 @@ class Dashboard extends Component {
           data: [{ data: { 0: { data: response.data.data } } }]
         })
       }
+    })
+  }
+  getJKO(){
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + this.state.city + '/JceDiary/JceDiary/'
+    }).then((response) => {
+      self.setState({
+        id: response.data.split('student: {')[1].split('},')[0].split(':')[1].split(',')[0],
+        klass: response.data.split('klass: {')[1].split('},')[0].split(':')[1].split(',')[0]
+      })
+      self.getUrl()
+    })
+  }
+  getUrl(){
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + this.state.city + '/JceDiary/GetDiaryUrl/',
+      data: 'klassId='+this.state.klass+'&periodId=1&studentId='+this.state.id
+    }).then((response) => {
+      console.log(response.data)
     })
   }
   getGoalIMKO(subjectID, studentID) {
