@@ -29,9 +29,6 @@ html, body, #root, .root, .login {
 ::-webkit-scrollbar-thumb:hover {
   background: #bebebe; 
 }
-.logo{
-  font-family: 'Montserrat', sans-serif;
-}
 .content{
   min-height: 100%;
   position: relative;
@@ -397,7 +394,6 @@ footer{
 
 .modal-content{
   border-radius: 4px;
-  margin: 40px 0px;
   position: absolute;
   padding: 20px;
   max-height: calc(100vh - 80px);
@@ -405,9 +401,10 @@ footer{
   max-width: 750px;
   width: 100%;
   left: 50%;
+  top: 50%;
   overflow-y: auto;
   z-index: 10;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .goals-homework{
@@ -593,7 +590,18 @@ footer{
     transform: rotate(359deg)
   }
 }
-
+@media screen and (max-width: 790px) {
+  .goals, .homework{
+    width: 100%;
+  }
+  .modal-content{
+    max-height: calc(100vh - 80px);
+    width: calc(100vw - 40px);
+  }
+  .goals-homework{
+    flex-wrap: wrap;
+  }
+}
 @media screen and (max-width: 750px) {
   .message{
     width: 100%;
@@ -613,20 +621,11 @@ footer{
   .subject{
     width: 100%;
   }
-  .goals, .homework{
-    width: 100%;
-  }
-  .modal-content{
-    max-height: calc(100vh - 80px);
-    width: calc(100vw - 40px);
-  }
-  .goals-homework{
-    flex-wrap: wrap;
-  }
 
 }
 @media screen and (min-width: 1300px){
   .content{
     padding-left: calc(25% - 245px);
   }
+
 }

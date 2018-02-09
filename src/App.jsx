@@ -148,7 +148,8 @@ class App extends Component {
       logged: false,
       role: '',
       journal: '',
-      city: ''
+      city: '',
+      fromLogin: false
     };
     this.done = this.done.bind(this);
   }
@@ -158,7 +159,8 @@ class App extends Component {
       redirect: true,
       role: role,
       journal: journal,
-      city: city
+      city: city,
+      fromLogin: true
     })
   }
   logout(){
@@ -181,7 +183,7 @@ class App extends Component {
               (<Login onDone={this.done} />)
           )} />
           <Route path='/dashboard' render={() => (
-            <Dashboard logout={this.logout.bind(this)} city={this.state.city} journal={this.state.journal} role={this.state.role} />
+            <Dashboard fromLogin={this.state.fromLogin} logout={this.logout.bind(this)} city={this.state.city} journal={this.state.journal} role={this.state.role} />
           )} />
         </div>
       </Router>
@@ -205,23 +207,29 @@ class Dashboard extends Component {
       homework: [],
       loading: false,
       id: '',
-      klass: ''
+      klass: '',
+      classes: [],
+      childrenList: []
     }
     this.getGoalIMKO = this.getGoalIMKO.bind(this)
     this.getGoalJKO = this.getGoalJKO.bind(this)
     this.closeModal = this.closeModal.bind(this)
     this.logout = this.logout.bind(this)
+    this.getClasses = this.getClasses.bind(this)
   }
   componentDidMount() {
     var self = this
-    if (!this.props) {
+    if (!this.props.fromLogin) {
       axios({
         withCredentials: true,
         method: "post",
         url: proxy + this.state.city + '/EventCalendar/GetEvents',
       }).then((response) => {
         if (!response.data.success) {
-          self
+          console.log(1)
+          self.setState({
+            redirect: true
+          })
         }
       })
     }
@@ -233,10 +241,42 @@ class Dashboard extends Component {
       }else{
         this.logout()
       }
+    }else if(this.state.role === 'Parent'){
+      this.getClasses()
     }
     if(!cookie.load('city')){
       this.logout()
     }
+  }
+  getClasses(){
+    var self = this
+    axios({
+      withCredentials: true,
+      method: 'post',
+      url: proxy + this.state.city + '/ImkoDiary/Klasses/',
+    }).then((response)=>{
+      self.setState({
+        classes: response.data.data
+      })
+      self.getChildren()
+    })
+  }
+  getChildren(){
+    var self = this
+    this.state.classes.map((klass)=>{
+      axios({
+        withCredentials: true,
+        method: 'post',
+        url: proxy + this.state.city + '/ImkoDiary/Students/',
+        data: 'klassId=' + klass.Id
+      }).then((response)=>{
+        var children = self.state.childrenList
+        children.concat(response.data.data)
+        self.setState({
+          childrenList: children
+        })
+      })
+    })
   }
   getIMKO(){
     var self = this
