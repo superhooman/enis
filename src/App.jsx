@@ -4,14 +4,13 @@ import 'react-select/dist/react-select.css';
 import {
   BrowserRouter as Router,
   Route,
-  Link,
   Redirect
 } from "react-router-dom";
 import axios from "axios";
 import cookie from "react-cookies";
 import Select from 'react-select';
 
-const proxy = "http://localhost/proxy.php?"
+const proxy = "/proxy.php?"
 
 const cities = [
   { code: "http://akt.nis.edu.kz/Aktau", label: "Актау ХБН", value: 0 },
@@ -163,7 +162,7 @@ class App extends Component {
       fromLogin: true
     })
   }
-  logout(){
+  logout() {
     this.setState({
       redirect: false,
       logged: false,
@@ -200,6 +199,7 @@ class Dashboard extends Component {
       journal: this.props.journal || cookie.load('journal'),
       role: this.props.role || cookie.load('role'),
       child: 0,
+      childWill: 0,
       quarter: 0,
       modalIMKO: false,
       data: false,
@@ -233,87 +233,102 @@ class Dashboard extends Component {
         }
       })
     }
-    if(this.state.role === 'Student'){
-      if(this.state.journal === 'IMKO'){
+    if (this.state.role === 'Student') {
+      if (this.state.journal === 'IMKO') {
         this.getIMKO()
-      }else if(this.state.journal === 'JKO'){
+      } else if (this.state.journal === 'JKO') {
         this.getJKO()
-      }else{
+      } else {
         this.logout()
       }
-    }else if(this.state.role === 'Parent'){
+    } else if (this.state.role === 'Parent') {
       this.getClasses()
     }
-    if(!cookie.load('city')){
+    if (!cookie.load('city')) {
       this.logout()
     }
   }
-  getClasses(){
+  getClasses() {
     var self = this
     axios({
       withCredentials: true,
       method: 'post',
       url: proxy + this.state.city + '/ImkoDiary/Klasses/',
-    }).then((response)=>{
+    }).then((response) => {
       self.setState({
         classes: response.data.data
       })
       self.getChildren()
     })
   }
-  getChildren(){
+  getChildren() {
     var self = this
-    this.state.classes.map((klass)=>{
+    this.state.classes.map((klass) => {
       axios({
         withCredentials: true,
         method: 'post',
         url: proxy + this.state.city + '/ImkoDiary/Students/',
         data: 'klassId=' + klass.Id
-      }).then((response)=>{
+      }).then((response) => {
         var children = self.state.childrenList
-        children.concat(response.data.data)
+        for(var i in response.data.data){
+          response.data.data[i].klass = klass.Id
+        }
+        children = children.concat(response.data.data)
         self.setState({
           childrenList: children
         })
+        if (self.state.journal === 'IMKO') {
+          self.getIMKO(children[0].Id)
+        } else if (self.state.journal === 'JKO') {
+          self.getUrl(children[0].klass, children[0].Id)
+        }
       })
+      return true;
     })
   }
-  getIMKO(){
+  getIMKO(studentId) {
     var self = this
     axios({
       withCredentials: true,
       method: 'post',
       url: proxy + this.state.city + '/ImkoDiary/Subjects',
-      data: 'periodId=1'
+      data: 'periodId=1' + (studentId ? '&studentId=' + studentId : '')
     }).then((response) => {
       if (response.data.success) {
         self.setState({
-          data: [{ data: { 0: { data: response.data.data } } }]
+          data: { 0: { data: { 0: { data: response.data.data } } } }
         })
       }
     })
   }
-  getJKO(){
+  getJKO(studentId) {
     var self = this
-    axios({
-      withCredentials: true,
-      method: 'post',
-      url: proxy + this.state.city + '/JceDiary/JceDiary/'
-    }).then((response) => {
-      self.setState({
-        id: response.data.split('student: {')[1].split('},')[0].split(':')[1].split(',')[0],
-        klass: response.data.split('klass: {')[1].split('},')[0].split(':')[1].split(',')[0]
+    if (!studentId) {
+      axios({
+        withCredentials: true,
+        method: 'post',
+        url: proxy + this.state.city + '/JceDiary/JceDiary/'
+      }).then((response) => {
+        var id = response.data.split('student: {')[1].split('},')[0].split(':')[1].split(',')[0]
+        var klass = response.data.split('klass: {')[1].split('},')[0].split(':')[1].split(',')[0]
+        self.setState({
+          id: id,
+          klass: klass
+        })
+        self.getUrl(klass)
       })
-      self.getUrl()
-    })
+    } else {
+      this.getUrl(studentId)
+    }
   }
-  getUrl(){
+  getUrl(klass, studentId) {
     var self = this
     axios({
       withCredentials: true,
       method: 'post',
       url: proxy + this.state.city + '/JceDiary/GetDiaryUrl/',
-      data: 'klassId='+this.state.klass+'&periodId=1&studentId='+this.state.id
+      data: 'klassId=' + klass + '&periodId=1' + (studentId ? '&studentId=' + studentId : '&studentId=' + this.state.id)
     }).then((response) => {
       axios({
         withCredentials: true,
@@ -324,7 +339,7 @@ class Dashboard extends Component {
       })
     })
   }
-  getJKOFinal(){
+  getJKOFinal() {
     var self = this
     axios({
       withCredentials: true,
@@ -333,7 +348,7 @@ class Dashboard extends Component {
       data: 'page=1&start=0&limit=25'
     }).then((response) => {
       self.setState({
-        data: [{ data: { 0: { data: response.data.data } } }]
+        data: { 0: { data: { 0: { data: response.data.data } } } }
       })
     })
   }
@@ -370,15 +385,15 @@ class Dashboard extends Component {
     axios({
       withCredentials: true,
       method: "post",
-      url: proxy + this.state.city + '/jce/Diary/GetResultByEvalution?_dc=' + (new Date()*1),
-      data: "journalId="+journalId+"&evalId="+evalId+"&page=1&start=0&limit=25"
+      url: proxy + this.state.city + '/jce/Diary/GetResultByEvalution?_dc=' + (new Date() * 1),
+      data: "journalId=" + journalId + "&evalId=" + evalId + "&page=1&start=0&limit=25"
     }).then((response) => {
       if (response.data.success) {
         axios({
           withCredentials: true,
           method: "post",
-          url: proxy + this.state.city + '/jce/Diary/GetResultByEvalution?_dc=' + (new Date()*1),
-          data: "journalId="+journalId+"&evalId="+evalId2+"&page=1&start=0&limit=25"
+          url: proxy + this.state.city + '/jce/Diary/GetResultByEvalution?_dc=' + (new Date() * 1),
+          data: "journalId=" + journalId + "&evalId=" + evalId2 + "&page=1&start=0&limit=25"
         }).then((response2) => {
           self.setState({
             loading: false,
@@ -414,14 +429,66 @@ class Dashboard extends Component {
     this.props.logout()
   }
   handleChange = (selectedOption) => {
-    selectedOption ? this.setState({
-      child: selectedOption.value
-    }) : this.setState({
-      child: 0
-    });
+    var self = this
+    if (selectedOption) {
+      if (this.state.journal === 'IMKO') {
+        axios({
+          withCredentials: true,
+          method: 'post',
+          url: proxy + this.state.city + '/ImkoDiary/Subjects',
+          data: 'periodId=1&studentId=' + self.state.childrenList[selectedOption.value].Id
+        }).then((response) => {
+          if (response.data.success) {
+            var data = self.state.data
+            data[selectedOption.value] = {data: {}}
+            data[selectedOption.value].data[0] = { data: response.data.data }
+            self.setState({
+              loading: false,
+              data: data,
+              child: selectedOption.value,
+              quarter: 0
+            })
+          }
+        })
+      } else if (this.state.journal === 'JKO') {
+        axios({
+          withCredentials: true,
+          method: 'post',
+          url: proxy + this.state.city + '/JceDiary/GetDiaryUrl/',
+          data: 'klassId=' + self.state.childrenList[selectedOption.value].klass + '&periodId=1&studentId=' + self.state.childrenList[selectedOption.value].Id
+        }).then((response) => {
+          axios({
+            withCredentials: true,
+            method: 'post',
+            url: proxy + response.data.data,
+          }).then((response) => {
+            axios({
+              withCredentials: true,
+              method: 'post',
+              url: proxy + this.state.city + '/jce/Diary/GetSubjects',
+              data: 'page=1&start=0&limit=25'
+            }).then((response) => {
+              var data = self.state.data
+              data[selectedOption.value] = {data: {}}
+              data[selectedOption.value].data[0] = { data: response.data.data }
+              self.setState({
+                loading: false,
+                child: selectedOption.value,
+                data: data,
+                quarter: 0
+              })
+            })
+          })
+        })
+      }
+    } else {
+      this.setState({
+        child: 0
+      });
+    }
   }
-  loadQuarter(id) {
-    if (this.state.data[this.state.child].data[id]) {
+  loadQuarter(id, child) {
+    if (this.state.data[child].data[id]) {
       this.setState({
         quarter: id
       })
@@ -430,16 +497,16 @@ class Dashboard extends Component {
       this.setState({
         loading: true
       })
-      if (this.state.journal === 'IMKO'){
+      if (this.state.journal === 'IMKO') {
         axios({
           withCredentials: true,
           method: 'post',
           url: proxy + this.state.city + '/ImkoDiary/Subjects',
-          data: 'periodId=' + (id * 1 + 1)
+          data: 'periodId=' + (id * 1 + 1) + (self.state.role === 'Parent' ? '&studentId=' + self.state.childrenList[child].Id : '')
         }).then((response) => {
           if (response.data.success) {
             var data = self.state.data
-            data[self.state.child].data[id] = { data: response.data.data }
+            data[child].data[id] = { data: response.data.data }
             self.setState({
               loading: false,
               data: data,
@@ -447,34 +514,34 @@ class Dashboard extends Component {
             })
           }
         })
-      }else if(this.state.journal === 'JKO'){
+      } else if (this.state.journal === 'JKO') {
         axios({
           withCredentials: true,
           method: 'post',
           url: proxy + this.state.city + '/JceDiary/GetDiaryUrl/',
-          data: 'klassId='+this.state.klass+'&periodId='+(id * 1 + 1)+'&studentId='+this.state.id
+          data: 'klassId=' + (self.state.role === 'Parent' ? self.state.childrenList[child].klass : this.state.klass) + '&periodId=' + (id * 1 + 1) + (self.state.role === 'Parent' ? '&studentId=' + self.state.childrenList[child].Id : '&studentId=' + this.state.id)
         }).then((response) => {
           axios({
             withCredentials: true,
             method: 'post',
             url: proxy + response.data.data,
           }).then((response) => {
-              axios({
-                withCredentials: true,
-                method: 'post',
-                url: proxy + this.state.city + '/jce/Diary/GetSubjects',
-                data: 'page=1&start=0&limit=25'
-              }).then((response)=>{
-                var data = self.state.data
-                data[self.state.child].data[id] = { data: response.data.data }
-                self.setState({
-                  loading: false,
-                  data: data,
-                  quarter: id
-                })
+            axios({
+              withCredentials: true,
+              method: 'post',
+              url: proxy + this.state.city + '/jce/Diary/GetSubjects',
+              data: 'page=1&start=0&limit=25'
+            }).then((response) => {
+              var data = self.state.data
+              data[child].data[id] = { data: response.data.data }
+              self.setState({
+                loading: false,
+                data: data,
+                quarter: id
               })
             })
           })
+        })
       }
     }
   }
@@ -497,69 +564,69 @@ class Dashboard extends Component {
                 {
                   this.state.modal ? (
                     this.state.journal === 'IMKO' ? (<div className="goals-homework">
-                    <div className="goals">
-                      <h2 className="title">Цели</h2>
-                      {
-                        this.state.goals.length ? getGoals(this.state.goals) : (
-                          <div className="empty">
-                            Пусто
+                      <div className="goals">
+                        <h2 className="title">Цели</h2>
+                        {
+                          this.state.goals.length ? getGoals(this.state.goals) : (
+                            <div className="empty">
+                              Пусто
                           </div>
-                        )
-                      }
-                    </div>
-                    <div className="homework">
-                      <h2 className="title">Домашняя работа</h2>
-                      {this.state.homework.length ? (
-                        this.state.homework.map((work) => {
-                          var html = {
-                            __html: stripHTMLTags(unescape(work.description))
-                          }
-                          return (
-                            <div key={work.date} className="work">
-                              <div className="info">
-                                <span className="date">
-                                  {timeConv(work.date)}
-                                </span>
-                              </div>
-                              <div dangerouslySetInnerHTML={html} className="work-content">
-                              </div>
-                              {work.files.length ? (
-                                <div className="attached">
-                                  {work.files.map((file) => (
-                                    <a key={file} download href={this.state.city + file}>
-                                      <div className="file">
-                                        <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                          <path d={getIcon(file.split('.')[file.split('.').length - 1])} />
-                                        </svg>
-                                      </div>
-                                    </a>
-                                  ))}
-                                </div>
-                              ) : ''}
-                            </div>
                           )
-                        })
-                      ) : (
-                          <div className="empty">
-                            Пусто
+                        }
+                      </div>
+                      <div className="homework">
+                        <h2 className="title">Домашняя работа</h2>
+                        {this.state.homework.length ? (
+                          this.state.homework.map((work) => {
+                            var html = {
+                              __html: stripHTMLTags(unescape(work.description))
+                            }
+                            return (
+                              <div key={work.date} className="work">
+                                <div className="info">
+                                  <span className="date">
+                                    {timeConv(work.date)}
+                                  </span>
+                                </div>
+                                <div dangerouslySetInnerHTML={html} className="work-content">
+                                </div>
+                                {work.files.length ? (
+                                  <div className="attached">
+                                    {work.files.map((file) => (
+                                      <a key={file} download href={this.state.city + file}>
+                                        <div className="file">
+                                          <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                            <path d={getIcon(file.split('.')[file.split('.').length - 1])} />
+                                          </svg>
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                ) : ''}
+                              </div>
+                            )
+                          })
+                        ) : (
+                            <div className="empty">
+                              Пусто
                         </div>
-                        )}
-                    </div>
-                  </div>):(
-                    <div className="goals-homework">
-                      {this.state.JKO.map((section, index)=>(
-                        <div key={index} className="homework">
-                          {index === 0 ? (<h2 className="title">Раздел</h2>):(<h2 className="title">Четверть</h2>)}
-                          {section.map((topic)=>(
-                            <div key={topic.Id} className="work">
-                              <h3 className="name"> {topic.Name} </h3>
-                              <span>{(topic.Score === -1 ? 0 : topic.Score) +  ' | ' + topic.MaxScore} </span>
+                          )}
+                      </div>
+                    </div>) : (
+                        <div className="goals-homework">
+                          {this.state.JKO.map((section, index) => (
+                            <div key={index} className="homework">
+                              {index === 0 ? (<h2 className="title">Раздел</h2>) : (<h2 className="title">Четверть</h2>)}
+                              {section.map((topic) => (
+                                <div key={topic.Id} className="work">
+                                  <h3 className="name"> {topic.Name} </h3>
+                                  <span>{(topic.Score === -1 ? 0 : topic.Score) + ' | ' + topic.MaxScore} </span>
+                                </div>
+                              ))}
                             </div>
                           ))}
                         </div>
-                      ))}
-                    </div>
-                  )
+                      )
                   ) : ''
                 }
               </div>
@@ -567,17 +634,15 @@ class Dashboard extends Component {
 
             <div className="menu">
               {
-                this.state.data.data ? (
-                  this.state.data.data.length > 1 ? (
-                    <Select
-                      name="form-field-name"
-                      value={this.state.child}
-                      placeholder="Ученик"
-                      searchable={false}
-                      onChange={this.handleChange}
-                      options={getList(this.state.data.data)}
-                    />) : ''
-                ) : ''
+                this.state.role === 'Parent' ? (
+                  <Select
+                    name="form-field-name"
+                    value={this.state.child}
+                    placeholder="Ученик"
+                    searchable={false}
+                    onChange={this.handleChange}
+                    options={getList(this.state.childrenList)}
+                  />) : ''
               }
               <div onClick={this.logout} className="logout button">
                 Выйти
@@ -585,22 +650,22 @@ class Dashboard extends Component {
             </div>
             <div className="tabs">
               <div onClick={() => {
-                this.loadQuarter(0)
+                this.loadQuarter(0, this.state.child)
               }} className={this.state.quarter === 0 ? 'tab active' : 'tab'}>
                 1 четверть
               </div>
               <div onClick={() => {
-                this.loadQuarter(1)
+                this.loadQuarter(1, this.state.child)
               }} className={this.state.quarter === 1 ? 'tab active' : 'tab'}>
                 2 четверть
               </div>
               <div onClick={() => {
-                this.loadQuarter(2)
+                this.loadQuarter(2, this.state.child)
               }} className={this.state.quarter === 2 ? 'tab active' : 'tab'}>
                 3 четверть
               </div>
               <div onClick={() => {
-                this.loadQuarter(3)
+                this.loadQuarter(3, this.state.child)
               }} className={this.state.quarter === 3 ? 'tab active' : 'tab'}>
                 4 четверть
               </div>
@@ -609,7 +674,7 @@ class Dashboard extends Component {
               {this.state.data ? this.state.journal === 'IMKO' ? (<div className="subjects">
                 {this.state.data[this.state.child].data[this.state.quarter].data.map((subject) => (
                   <div key={subject.Id} onClick={() => {
-                    this.getGoalIMKO(subject.Id, this.state.data[this.state.child].childID)
+                    this.state.role === 'Parent' ? this.getGoalIMKO(subject.Id, this.state.childrenList[this.state.child].Id) : this.getGoalIMKO(subject.Id, null)
                   }} className="subject">
                     <div className={getWidth(subject) === 100 ? 'progress full' : 'progress'} style={{
                       width: getWidth(subject) + '%'
@@ -648,7 +713,7 @@ class Dashboard extends Component {
                   <div className="subjects">
                     {this.state.data[this.state.child].data[this.state.quarter].data.map((subject, index) => (
                       <div key={subject.Name} onClick={() => {
-                        if(subject.Evalutions.length > 0){
+                        if (subject.Evalutions.length > 0) {
                           this.getGoalJKO(subject.JournalId, subject.Evalutions[0].Id, subject.Evalutions[1].Id)
                         }
                       }} className="subject jko">
@@ -698,7 +763,7 @@ class Login extends Component {
       city: cookie.load('cityID') ? cookie.load('cityID') : '',
       journal: cookie.load('journal') ? cookie.load('journal') : 'JKO',
       pin: "",
-      password:  "",
+      password: "",
       remember: false
     };
     this.login = this.login.bind(this)
@@ -718,7 +783,7 @@ class Login extends Component {
         }
       })
     }
-    if(cookie.load('pin')){
+    if (cookie.load('pin')) {
       this.login(cookie.load('pin'), cookie.load('password'), true)
     }
   }
@@ -851,8 +916,10 @@ class Login extends Component {
             <p>— удобный клиент для ИОСа</p>
           </div>
           <div className="login-cont">
-            <form className="form" action="javascript:void(0)" onSubmit={()=>{
-              this.login(this.state.pin, this.state.password, this.state.remember)
+            <form className="form" onKeyPress={(e) => {
+              if(e && e.keyCode === 13) {
+                this.login(this.state.pin, this.state.password, this.state.remember)
+              }
             }}>
               <Select
                 name="form-field-name"
@@ -878,14 +945,14 @@ class Login extends Component {
                   remember: value
                 })
               }} label="Запомнить" />
-              <Toggle initState={cookie.load('journal') ? cookie.load('journal') === 'JKO' ? false : true : false} onChange={(value) => {
+              <Toggle initState={cookie.load('journal') ? cookie.load('journal') === 'IMKO' ? true : false : false} onChange={(value) => {
                 this.setState({
                   journal: value ? 'IMKO' : 'JKO'
                 })
 
               }} label="ИМКО" label0="ЖКО" />
             </div>
-            <button onClick={()=>{
+            <button onClick={() => {
               this.login(this.state.pin, this.state.password, this.state.remember)
             }} className="button">
               Войти
@@ -894,8 +961,8 @@ class Login extends Component {
           <footer>
             <span>Coded with </span>
             <svg fill="#5b5b5b" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="2.139"/>
-              <path d="M6.008 16.255l-.472-.12C2.018 15.246 0 13.737 0 11.996s2.018-3.25 5.536-4.139l.472-.119.133.468a23.53 23.53 0 0 0 1.363 3.578l.101.213-.101.213a23.307 23.307 0 0 0-1.363 3.578l-.133.467zM5.317 8.95c-2.674.751-4.315 1.9-4.315 3.046 0 1.145 1.641 2.294 4.315 3.046a24.95 24.95 0 0 1 1.182-3.046A24.752 24.752 0 0 1 5.317 8.95zM17.992 16.255l-.133-.469a23.357 23.357 0 0 0-1.364-3.577l-.101-.213.101-.213a23.42 23.42 0 0 0 1.364-3.578l.133-.468.473.119c3.517.889 5.535 2.398 5.535 4.14s-2.018 3.25-5.535 4.139l-.473.12zm-.491-4.259c.48 1.039.877 2.06 1.182 3.046 2.675-.752 4.315-1.901 4.315-3.046 0-1.146-1.641-2.294-4.315-3.046a24.788 24.788 0 0 1-1.182 3.046z"/><path d="M5.31 8.945l-.133-.467C4.188 4.992 4.488 2.494 6 1.622c1.483-.856 3.864.155 6.359 2.716l.34.349-.34.349a23.552 23.552 0 0 0-2.422 2.967l-.135.193-.235.02a23.657 23.657 0 0 0-3.785.61l-.472.119zm1.896-6.63c-.268 0-.505.058-.705.173-.994.573-1.17 2.565-.485 5.253a25.122 25.122 0 0 1 3.233-.501 24.847 24.847 0 0 1 2.052-2.544c-1.56-1.519-3.037-2.381-4.095-2.381zM16.795 22.677c-.001 0-.001 0 0 0-1.425 0-3.255-1.073-5.154-3.023l-.34-.349.34-.349a23.53 23.53 0 0 0 2.421-2.968l.135-.193.234-.02a23.63 23.63 0 0 0 3.787-.609l.472-.119.134.468c.987 3.484.688 5.983-.824 6.854a2.38 2.38 0 0 1-1.205.308zm-4.096-3.381c1.56 1.519 3.037 2.381 4.095 2.381h.001c.267 0 .505-.058.704-.173.994-.573 1.171-2.566.485-5.254a25.02 25.02 0 0 1-3.234.501 24.674 24.674 0 0 1-2.051 2.545z"/><path d="M18.69 8.945l-.472-.119a23.479 23.479 0 0 0-3.787-.61l-.234-.02-.135-.193a23.414 23.414 0 0 0-2.421-2.967l-.34-.349.34-.349C14.135 1.778 16.515.767 18 1.622c1.512.872 1.812 3.37.824 6.855l-.134.468zM14.75 7.24c1.142.104 2.227.273 3.234.501.686-2.688.509-4.68-.485-5.253-.988-.571-2.845.304-4.8 2.208A24.849 24.849 0 0 1 14.75 7.24zM7.206 22.677A2.38 2.38 0 0 1 6 22.369c-1.512-.871-1.812-3.369-.823-6.854l.132-.468.472.119c1.155.291 2.429.496 3.785.609l.235.02.134.193a23.596 23.596 0 0 0 2.422 2.968l.34.349-.34.349c-1.898 1.95-3.728 3.023-5.151 3.023zm-1.19-6.427c-.686 2.688-.509 4.681.485 5.254.987.563 2.843-.305 4.8-2.208a24.998 24.998 0 0 1-2.052-2.545 24.976 24.976 0 0 1-3.233-.501z"/><path d="M12 16.878c-.823 0-1.669-.036-2.516-.106l-.235-.02-.135-.193a30.388 30.388 0 0 1-1.35-2.122 30.354 30.354 0 0 1-1.166-2.228l-.1-.213.1-.213a30.3 30.3 0 0 1 1.166-2.228c.414-.716.869-1.43 1.35-2.122l.135-.193.235-.02a29.785 29.785 0 0 1 5.033 0l.234.02.134.193a30.006 30.006 0 0 1 2.517 4.35l.101.213-.101.213a29.6 29.6 0 0 1-2.517 4.35l-.134.193-.234.02c-.847.07-1.694.106-2.517.106zm-2.197-1.084c1.48.111 2.914.111 4.395 0a29.006 29.006 0 0 0 2.196-3.798 28.585 28.585 0 0 0-2.197-3.798 29.031 29.031 0 0 0-4.394 0 28.477 28.477 0 0 0-2.197 3.798 29.114 29.114 0 0 0 2.197 3.798z"/>
+              <circle cx="12" cy="12" r="2.139" />
+              <path d="M6.008 16.255l-.472-.12C2.018 15.246 0 13.737 0 11.996s2.018-3.25 5.536-4.139l.472-.119.133.468a23.53 23.53 0 0 0 1.363 3.578l.101.213-.101.213a23.307 23.307 0 0 0-1.363 3.578l-.133.467zM5.317 8.95c-2.674.751-4.315 1.9-4.315 3.046 0 1.145 1.641 2.294 4.315 3.046a24.95 24.95 0 0 1 1.182-3.046A24.752 24.752 0 0 1 5.317 8.95zM17.992 16.255l-.133-.469a23.357 23.357 0 0 0-1.364-3.577l-.101-.213.101-.213a23.42 23.42 0 0 0 1.364-3.578l.133-.468.473.119c3.517.889 5.535 2.398 5.535 4.14s-2.018 3.25-5.535 4.139l-.473.12zm-.491-4.259c.48 1.039.877 2.06 1.182 3.046 2.675-.752 4.315-1.901 4.315-3.046 0-1.146-1.641-2.294-4.315-3.046a24.788 24.788 0 0 1-1.182 3.046z" /><path d="M5.31 8.945l-.133-.467C4.188 4.992 4.488 2.494 6 1.622c1.483-.856 3.864.155 6.359 2.716l.34.349-.34.349a23.552 23.552 0 0 0-2.422 2.967l-.135.193-.235.02a23.657 23.657 0 0 0-3.785.61l-.472.119zm1.896-6.63c-.268 0-.505.058-.705.173-.994.573-1.17 2.565-.485 5.253a25.122 25.122 0 0 1 3.233-.501 24.847 24.847 0 0 1 2.052-2.544c-1.56-1.519-3.037-2.381-4.095-2.381zM16.795 22.677c-.001 0-.001 0 0 0-1.425 0-3.255-1.073-5.154-3.023l-.34-.349.34-.349a23.53 23.53 0 0 0 2.421-2.968l.135-.193.234-.02a23.63 23.63 0 0 0 3.787-.609l.472-.119.134.468c.987 3.484.688 5.983-.824 6.854a2.38 2.38 0 0 1-1.205.308zm-4.096-3.381c1.56 1.519 3.037 2.381 4.095 2.381h.001c.267 0 .505-.058.704-.173.994-.573 1.171-2.566.485-5.254a25.02 25.02 0 0 1-3.234.501 24.674 24.674 0 0 1-2.051 2.545z" /><path d="M18.69 8.945l-.472-.119a23.479 23.479 0 0 0-3.787-.61l-.234-.02-.135-.193a23.414 23.414 0 0 0-2.421-2.967l-.34-.349.34-.349C14.135 1.778 16.515.767 18 1.622c1.512.872 1.812 3.37.824 6.855l-.134.468zM14.75 7.24c1.142.104 2.227.273 3.234.501.686-2.688.509-4.68-.485-5.253-.988-.571-2.845.304-4.8 2.208A24.849 24.849 0 0 1 14.75 7.24zM7.206 22.677A2.38 2.38 0 0 1 6 22.369c-1.512-.871-1.812-3.369-.823-6.854l.132-.468.472.119c1.155.291 2.429.496 3.785.609l.235.02.134.193a23.596 23.596 0 0 0 2.422 2.968l.34.349-.34.349c-1.898 1.95-3.728 3.023-5.151 3.023zm-1.19-6.427c-.686 2.688-.509 4.681.485 5.254.987.563 2.843-.305 4.8-2.208a24.998 24.998 0 0 1-2.052-2.545 24.976 24.976 0 0 1-3.233-.501z" /><path d="M12 16.878c-.823 0-1.669-.036-2.516-.106l-.235-.02-.135-.193a30.388 30.388 0 0 1-1.35-2.122 30.354 30.354 0 0 1-1.166-2.228l-.1-.213.1-.213a30.3 30.3 0 0 1 1.166-2.228c.414-.716.869-1.43 1.35-2.122l.135-.193.235-.02a29.785 29.785 0 0 1 5.033 0l.234.02.134.193a30.006 30.006 0 0 1 2.517 4.35l.101.213-.101.213a29.6 29.6 0 0 1-2.517 4.35l-.134.193-.234.02c-.847.07-1.694.106-2.517.106zm-2.197-1.084c1.48.111 2.914.111 4.395 0a29.006 29.006 0 0 0 2.196-3.798 28.585 28.585 0 0 0-2.197-3.798 29.031 29.031 0 0 0-4.394 0 28.477 28.477 0 0 0-2.197 3.798 29.114 29.114 0 0 0 2.197 3.798z" />
             </svg>
             <span> by </span>
             <a className="link" href="https://uenify.com/">
@@ -941,7 +1008,7 @@ class Toggle extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      on: false
+      on: this.props.initState ? this.props.initState : false
     }
   }
   render() {

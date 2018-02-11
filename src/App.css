@@ -293,13 +293,13 @@ footer{
   text-align: center;
 }
 .formative{
-  width: 50px;
+  width: 70px;
 }
 .percent{
   width: 100px;
 }
 .summative{
-  width: 50px;
+  width: 70px;
   margin-left: 10px;
 }
 .grade{
@@ -621,7 +621,6 @@ footer{
   .subject{
     width: 100%;
   }
-
 }
 @media screen and (min-width: 1300px){
   .content{
