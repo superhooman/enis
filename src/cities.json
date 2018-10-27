@@ -1,0 +1,115 @@
+[{
+    "url": "http://sms.akt.nis.edu.kz/Aktau",
+    "label": "Актау ХБН",
+    "value": 0,
+    "code": "Aktau"
+},
+{
+    "url": "http://sms.akb.nis.edu.kz/Aktobe",
+    "label": "Актобе ФМН",
+    "value": 1,
+    "code": "Aktobe"
+},
+{
+    "url": "http://sms.fmalm.nis.edu.kz/Almaty_Fmsh",
+    "label": "Алматы ФМН",
+    "value": 2,
+    "code": "Almaty_Fmsh"
+},
+{
+    "url": "http://sms.hbalm.nis.edu.kz/Almaty_Hbsh",
+    "label": "Алматы ХБН",
+    "value": 3,
+    "code": "Almaty_Hbsh"
+},
+{
+    "url": "http://sms.ast.nis.edu.kz/Astana_Fmsh",
+    "label": "Астана ФМН",
+    "value": 4,
+    "code": "Astana_Fmsh"
+},
+{
+    "url": "http://sms.atr.nis.edu.kz/Atyrau",
+    "label": "Атырау ХБН",
+    "value": 5,
+    "code": "Atyrau"
+},
+{
+    "url": "http://sms.krg.nis.edu.kz/Karaganda",
+    "label": "Караганда ХБН",
+    "value": 6,
+    "code": "Karaganda"
+},
+{
+    "url": "http://sms.kt.nis.edu.kz/Kokshetau",
+    "label": "Кокшетау ФМН",
+    "value": 7,
+    "code": "Kokshetau"
+},
+{
+    "url": "http://sms.kst.nis.edu.kz/Kostanay",
+    "label": "Костанай ФМН",
+    "value": 8,
+    "code": "Kostanay"
+},
+{
+    "url": "http://sms.kzl.nis.edu.kz/Kyzylorda",
+    "label": "Кызылорда ХБН",
+    "value": 9,
+    "code": "Kyzylorda"
+},
+{
+    "url": "http://sms.pvl.nis.edu.kz/Pavlodar",
+    "label": "Павлодар ХБН",
+    "value": 10,
+    "code": "Pavlodar"
+},
+{
+    "url": "http://sms.ptr.nis.edu.kz/Petropavlovsk",
+    "label": "Петропавловск ХБН",
+    "value": 11,
+    "code": "Petropavlovsk"
+},
+{
+    "url": "http://sms.sm.nis.edu.kz/Semey_FMSH",
+    "label": "Семей ФМН",
+    "value": 12,
+    "code": "Semey_FMSH"
+},
+{
+    "url": "http://sms.tk.nis.edu.kz/Taldykorgan",
+    "label": "Талдыкорган ФМН",
+    "value": 13,
+    "code": "Taldykorgan"
+},
+{
+    "url": "http://sms.trz.nis.edu.kz/Taraz",
+    "label": "Тараз ФМН",
+    "value": 14,
+    "code": "Taraz"
+},
+{
+    "url": "http://sms.ura.nis.edu.kz/Uralsk",
+    "label": "Уральск ФМН",
+    "value": 15,
+    "code": "Uralsk"
+},
+{
+    "url": "http://sms.ukk.nis.edu.kz/Oskemen",
+    "label": "Усть-Каменогорск ХБН",
+    "value": 16,
+    "code": "Oskemen"
+},
+{
+    "url": "http://sms.fmsh.nis.edu.kz/Shymkent_Fmsh",
+    "label": "Шымкент ФМН",
+    "value": 17,
+    "code": "Shymkent_Fmsh"
+},
+{
+    "url": "http://sms.hbsh.nis.edu.kz/Shymkent_Hbsh",
+    "label": "Шымкент ХБН",
+    "value": 18,
+    "code": "Shymkent_Hbsh"
+}
+]
