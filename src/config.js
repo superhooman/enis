@@ -11,7 +11,7 @@ if (isDev) {
     }
 } else {
     config = {
-        "server": "https://proxy.nisapp.kz/"
+        "server": "https://enis-proxy.herokuapp.com/"
     }
 }
 export default config
