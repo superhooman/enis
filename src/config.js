@@ -11,7 +11,7 @@ if (isDev) {
     }
 } else {
     config = {
-        "server": "https://enis-proxy.herokuapp.com/"
+        "server": "https://10.17.24.96:3003/" //For test
     }
 }
 export default config

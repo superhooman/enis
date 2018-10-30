@@ -24,15 +24,15 @@ const backs = [ hb0, hb1, hb2, hb3, hb4, hb5, hb6, hb7, hb8, hb9 ];
 let locale = [ 'RU', 'KZ', 'EN' ];
 
 let culture = {
-    0: 'ru-RU',
-    1: 'kk-KZ',
-    2: 'en-US'
-}
+	0: 'ru-RU',
+	1: 'kk-KZ',
+	2: 'en-US'
+};
 
 const cityToEng = (city) => {
-    city = city.split(' ')
-    return Translit(city[0]) + ' ' + (city[1] === 'ХБН' ? 'CBD' : 'PhMD')
-}
+	city = city.split(' ');
+	return Translit(city[0]) + ' ' + (city[1] === 'ХБН' ? 'CBD' : 'PhMD');
+};
 
 const Translit = (str) => {
 	let ru = {
@@ -96,11 +96,14 @@ class Home extends Component {
 			password: '',
 			city: this.props.city || 0,
 			journal: this.props.journal || 'jko',
+			captchaImg: '',
+			captcha: '',
 			back: getRandomElement(backs)
 		};
 		this.login = this.login.bind(this);
 		this.loadRoles = this.loadRoles.bind(this);
 		this.loginWithRole = this.loginWithRole.bind(this);
+		this.handleCaptcha = this.handleCaptcha.bind(this);
 	}
 	login() {
 		this.props.loadingStart();
@@ -115,9 +118,14 @@ class Home extends Component {
 				'&txtUsername=' +
 				this.state.login +
 				'&txtPassword=' +
-				this.state.password
+				this.state.password + (this.state.captcha ? ('&captchaInput=' + this.state.captcha) : '')
 		})
 			.then((response) => {
+				if (response.data.captchaType === 'Local' && response.data.captchaImg) {
+					this.props.notify(response.data.ErrorMessage);
+					this.props.loadingStop();
+					return this.handleCaptcha(response.data.captchaImg);
+				}
 				if (response.data.success) {
 					this.loadRoles();
 				} else {
@@ -129,6 +137,11 @@ class Home extends Component {
 				this.props.notify(lang[this.props.locale].error);
 				this.props.loadingStop();
 			});
+	}
+	handleCaptcha(img) {
+		this.setState({
+			captchaImg: img
+		});
 	}
 	loadRoles() {
 		axios({
@@ -236,6 +249,30 @@ class Home extends Component {
 								))}
 							</select>
 						</div>
+						{this.state.captchaImg && (
+							<div className="field">
+								<img
+									style={{
+										maxWidth: '100%',
+										width: '100%',
+										marginTop: 8,
+										borderRadius: 4,
+										marginBottom: 8,
+										boxShadow: '0 4px 16px -2px rgba(0,0,0,.28)'
+									}}
+									alt="captcha"
+									role="img"
+									src={'data:image/jpg;base64,' + this.state.captchaImg}
+								/>
+								<input
+									className="input"
+									type="text"
+									placeholder={lang[this.props.locale].captcha}
+									value={this.state.captcha}
+									onChange={(e) => this.setState({ captcha: e.target.value })}
+								/>
+							</div>
+						)}
 						<div className="field">
 							<div className="switcher">
 								<div
