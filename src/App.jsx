@@ -16,7 +16,16 @@ class App extends Component {
     super(props)
     this.state = {
       iosPWA: false
-    }
+	}
+  }
+  componentWillReceiveProps(newProps){
+	  if(newProps.message.show){
+		  setTimeout(()=>{
+				if(this.props.message.show){
+					this.props.dismissNotify()
+				}
+		  }, 3000)
+	  }
   }
   componentWillMount(){
     let iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;

@@ -14,6 +14,24 @@ import 'react-custom-scroll/dist/customScroll.css';
 
 let locale = [ 'RU', 'KZ', 'EN' ];
 
+let isDev = process.env.NODE_ENV === 'development';
+
+const getPeriod = () =>{
+	let a = new Date()
+	a = a.getMonth()
+	if(a <= 2){
+		return 3
+	}else if(a > 2 && a < 8){
+		return 4
+	}else if(a >= 8 && a < 10){
+		return 1
+	}else if(a >= 10){
+		return 2
+	}else{
+		return 1
+	}
+}
+
 const stripHTMLTags = (str) => {
 	if (str === null || str === '') return ' ';
 	else str = str.toString();
@@ -107,7 +125,7 @@ class Dashboard extends Component {
 		super(props);
 		this.state = {
 			childID: 0,
-			periodID: 0,
+			periodID: getPeriod() - 1,
 			loaded: false,
 			childList: [],
 			user: props.user,
@@ -133,6 +151,34 @@ class Dashboard extends Component {
 			this.getClasses();
 		}
 		window.addEventListener('scroll', this.onScroll);
+		!isDev &&
+			(function(w, d, n, s, t) {
+				w[n] = w[n] || [];
+				console.log('hello');
+				if (window.innerWidth < 768) {
+					w[n].push(function() {
+						window.Ya.Context.AdvManager.render({
+							blockId: 'R-A-329971-1',
+							renderTo: 'yandex_rtb_R-A-329971-1',
+							async: true
+						});
+					});
+				} else {
+					w[n].push(function() {
+						window.Ya.Context.AdvManager.render({
+							blockId: 'R-A-329971-2',
+							renderTo: 'yandex_rtb_R-A-329971-2',
+							async: true
+						});
+					});
+				}
+				t = d.getElementsByTagName('script')[0];
+				s = d.createElement('script');
+				s.type = 'text/javascript';
+				s.src = '//an.yandex.ru/system/context.js';
+				s.async = true;
+				t.parentNode.insertBefore(s, t);
+			})(window, document, 'yandexContextAsyncCallbacks');
 	}
 	componentWillUnmount() {
 		window.removeEventListener('scroll', this.onScroll);
@@ -177,10 +223,10 @@ class Dashboard extends Component {
 						} else if (this.state.user.journal === 'jko') {
 							this.getPeriod();
 						}
-					}else{
-                        this.props.logout();
-					this.props.loadingStop();
-                    }
+					} else {
+						this.props.logout();
+						this.props.loadingStop();
+					}
 				})
 				.catch((err) => {
 					this.props.logout();
@@ -206,6 +252,7 @@ class Dashboard extends Component {
 		});
 	}
 	getUrl(child) {
+		let period = this.state.periodID 
 		axios({
 			withCredentials: true,
 			method: 'POST',
@@ -215,7 +262,7 @@ class Dashboard extends Component {
 				'/JceDiary/GetDiaryUrl/?lang=ru-RU&klassId=' +
 				this.state.childList[child].klass +
 				'&periodId=' +
-				this.periodsData[0].Id +
+				this.periodsData[period].Id +
 				'&studentId=' +
 				this.state.childList[child].Id
 		})
@@ -237,6 +284,7 @@ class Dashboard extends Component {
 			});
 	}
 	getJKOFinal(child) {
+		let period = this.state.periodID
 		axios({
 			withCredentials: true,
 			method: 'POST',
@@ -244,8 +292,7 @@ class Dashboard extends Component {
 		})
 			.then((response) => {
 				if (response.data.success) {
-					let data = {};
-					data[child] = { data: { 0: { data: response.data.data } } };
+					let data = {[child]: { data: { [period] : {data: response.data.data}}}};
 					this.data = data;
 					this.setState({
 						refreshing: false,
@@ -265,6 +312,8 @@ class Dashboard extends Component {
 			});
 	}
 	getIMKO(studentId) {
+		let period = this.state.periodID
+		console.log(this.state.periodID, period)
 		axios({
 			withCredentials: true,
 			method: 'post',
@@ -272,12 +321,12 @@ class Dashboard extends Component {
 				config.server +
 				cities[this.props.city].code +
 				'/ImkoDiary/Subjects?periodId=' +
-				this.periodsData[0].Id +
+				this.periodsData[period].Id +
 				(studentId ? '&studentId=' + studentId : '')
 		}).then((response) => {
 			if (response.data.success) {
 				this.props.loadingStop();
-				this.data = { 0: { data: { 0: { data: response.data.data } } } };
+				this.data = {0: { data: { [period]: { data: response.data.data}}}};
 				this.setState({
 					loaded: true
 				});
@@ -440,7 +489,7 @@ class Dashboard extends Component {
 							</div>
 							{this.state.loaded &&
 								(this.state.user.journal === 'imko' ? (
-									<div className="subjects">
+									<div className={"subjects" + (this.state.user.role === 'Parent' ? ' parent' : '')}>
 										{this.data[this.state.childID].data[
 											this.state.periodID
 										].data.map((subject, index) => (
@@ -460,11 +509,6 @@ class Dashboard extends Component {
 														: ' oops')
 												}
 											>
-												<div className="grade">
-													<div className="value">
-														{subject.Period ? subject.Period : 'N/A'}
-													</div>
-												</div>
 												<h2 className="title">{subject.Name}</h2>
 
 												<div className="subject-info">
@@ -474,7 +518,7 @@ class Dashboard extends Component {
 																width:
 																	subject.MaxISA !== 0
 																		? 'calc(' +
-																			(subject.ApproveCnt / subject.Cnt * 60 + 10) +
+																			(subject.ApproveCnt / subject.Cnt * 20 + 10) +
 																			'% - 5px)'
 																		: subject.ApproveCnt / subject.Cnt * 90 +
 																			10 +
@@ -500,7 +544,7 @@ class Dashboard extends Component {
 																style={{
 																	width:
 																		subject.MaxISA !== 0
-																			? subject.ApproveISA / subject.MaxISA * 20 +
+																			? subject.ApproveISA / subject.MaxISA * 60 +
 																				10 +
 																				'%'
 																			: 0
@@ -538,7 +582,7 @@ class Dashboard extends Component {
 											<div
 												key={subject.Name}
 												onClick={() => {
-													if (subject.Evalutions.length > 0) {
+													if (subject.Evaluations.length > 0) {
 														this.props.history.push('/dashboard/' + index);
 													}
 												}}
@@ -547,13 +591,13 @@ class Dashboard extends Component {
 												}}
 												className={
 													'subject jko' +
-													(subject.Evalutions.length ? ' clickable' : '') +
+													(subject.Evaluations.length ? ' clickable' : '') +
 													(subject.Score.toFixed(2) >= 85 ? ' five' : '')
 												}
 											>
 												<div className="grade">
 													<div className="value">
-														{subject.Evalutions.length ? subject.Mark ? (
+														{subject.Evaluations.length ? subject.Mark ? (
 															subject.Mark
 														) : (
 															'N/A'
@@ -632,17 +676,22 @@ class Dashboard extends Component {
 						/>
 					)}
 				/>
+				<div className="adds">{lang[this.props.locale].adds}</div>
+				<div id="yandex_rtb_R-A-329971-1" />
+				<div id="yandex_rtb_R-A-329971-2" />
 				<div className="footer">
-					<div onClick={this.props.changeLocale} className="locale">
-						{locale[this.props.locale]}
-					</div>
-					<div onClick={this.props.logout} className="locale">
-						{lang[this.props.locale].logout}
-					</div>
-					<div onClick={this.props.changeTheme} className="theme">
-						<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-							<path d="M401.4 354.2c-2.9.1-5.8.2-8.7.2-47.9 0-93-18.9-126.8-53.4-33.9-34.4-52.5-80.1-52.5-128.8 0-27.7 6.1-54.5 17.5-78.7 3.1-6.6 9.3-16.6 13.6-23.4 1.9-2.9-.5-6.7-3.9-6.1-6 .9-15.2 2.9-27.7 6.8C135.1 95.5 80 168.7 80 255c0 106.6 85.1 193 190.1 193 58 0 110-26.4 144.9-68.1 6-7.2 11.5-13.8 16.4-21.8 1.8-3-.7-6.7-4.1-6.1-8.5 1.7-17.1 1.8-25.9 2.2z" />
-						</svg>
+					<div className="footer-wrap">
+						<div onClick={this.props.changeLocale} className="locale">
+							{locale[this.props.locale]}
+						</div>
+						<div onClick={this.props.logout} className="locale">
+							{lang[this.props.locale].logout}
+						</div>
+						<div onClick={this.props.changeTheme} className="theme">
+							<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+								<path d="M401.4 354.2c-2.9.1-5.8.2-8.7.2-47.9 0-93-18.9-126.8-53.4-33.9-34.4-52.5-80.1-52.5-128.8 0-27.7 6.1-54.5 17.5-78.7 3.1-6.6 9.3-16.6 13.6-23.4 1.9-2.9-.5-6.7-3.9-6.1-6 .9-15.2 2.9-27.7 6.8C135.1 95.5 80 168.7 80 255c0 106.6 85.1 193 190.1 193 58 0 110-26.4 144.9-68.1 6-7.2 11.5-13.8 16.4-21.8 1.8-3-.7-6.7-4.1-6.1-8.5 1.7-17.1 1.8-25.9 2.2z" />
+							</svg>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -791,7 +840,7 @@ class SubjectPage extends Component {
 				'&journalId=' +
 				subject.JournalId +
 				'&evalId=' +
-				subject.Evalutions[1].Id +
+				subject.Evaluations[1].Id +
 				'&page=1&start=0&limit=25'
 		}).then((response) => {
 			if (response.data.success) {
@@ -806,7 +855,7 @@ class SubjectPage extends Component {
 						'&journalId=' +
 						subject.JournalId +
 						'&evalId=' +
-						subject.Evalutions[0].Id +
+						subject.Evaluations[0].Id +
 						'&page=1&start=0&limit=25'
 				}).then((response2) => {
 					let jko = [ response2.data.data, response.data.data ];
@@ -897,7 +946,7 @@ class SubjectPage extends Component {
 		return (
 			<div>
 				<div className="header goals">
-					<div>
+					<div className="title">
 						<div onClick={this.props.history.goBack} className="back">
 							<svg
 								height={28}

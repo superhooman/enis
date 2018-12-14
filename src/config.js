@@ -7,11 +7,13 @@ try {
 }
 if (isDev) {
     config = {
-        "server": "http://localhost:3003/"
+        "server": "http://localhost:3003/",
+        "captcha": "http://localhost:8080"
     }
 } else {
     config = {
-        "server": "https://10.17.24.96:3003/" //For test
+        "server": window.location.host === "nisapp.kz" ? 'https://api.nisapp.kz' : (window.location.origin + ':3003'),
+        "captcha": "http://pvl.nis.edu.kz/captcha.html"
     }
 }
 export default config

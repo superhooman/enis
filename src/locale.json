@@ -38,7 +38,8 @@
         "journalChoose": "Выберите журнал",
         "about": "О проекте",
         "footerInfo": "Мы есть в",
-        "or": "или"
+        "or": "или",
+        "adds": "Реклама"
     },
     "1": {
         "slogan": "ABJ arnalǵan klıent",
@@ -79,7 +80,8 @@
         "journalChoose": "Jýrnaly tańdańyz",
         "about": "Joba týraly",
         "footerInfo": "Bizdiń",
-        "or": "nemese"
+        "or": "nemese",
+        "adds": "Zharnama"
     },
     "2": {
         "slogan": "Сlient for IES",
@@ -120,6 +122,7 @@
         "journalChoose": "Select your journal",
         "about": "About",
         "footerInfo": "Visit us on",
-        "or": "or"
+        "or": "or",
+        "adds": "Adds"
     }
 }
